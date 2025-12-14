@@ -1101,7 +1101,7 @@ function animate() {
     ballMesh.position.copy(ballBody.position);
     ballMesh.quaternion.copy(ballBody.quaternion);
 
-    updateCamera();
+    updateCamera(deltaTime);
     renderer.render(scene, camera);
 }
 
@@ -1171,3 +1171,4 @@ window.addEventListener('keydown', (e) => {
 </script>
 </body>
 </html>
+
