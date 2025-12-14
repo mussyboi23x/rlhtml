@@ -159,7 +159,7 @@
     const ORANGE_GOAL_LINE = FIELD_L/2;
 
     init();
-    animate(deltaTime);
+    animate();
 
     function init() {
         // 1. SETUP THREE.JS
@@ -710,7 +710,7 @@ function score(team) {
         }
     }
 
-function updatePhysics(deltaTime) {
+function updatePhysics() {
     if (gameState !== 'playing') return;
 
     const isCarOnGround = carBody.position.y < (CAR_SIZE.h * 1.5);
@@ -774,10 +774,10 @@ if (isCarOnGround) {
     }
 
     const targetVelocity = rotatedForward.scale(targetSpeed);
-    const accelTime = 0.1; // how quickly car reaches target speed (in seconds)
-    const factor = 1 - Math.exp(-deltaTime / accelTime);
-    carBody.velocity.x += (targetVelocity.x - carBody.velocity.x) * factor;
-    carBody.velocity.z += (targetVelocity.z - carBody.velocity.z) * factor;
+    const accelFactor = 0.05;
+
+    carBody.velocity.x = carBody.velocity.x * (1 - accelFactor) + targetVelocity.x * accelFactor;
+    carBody.velocity.z = carBody.velocity.z * (1 - accelFactor) + targetVelocity.z * accelFactor;
 
     // <<< ADDED: ROCKET LEAGUE GROUND GRIP (kills side slide)
     if (isCarOnGround) {
@@ -802,11 +802,12 @@ if (isCarOnGround) {
         updateAerialControls();
     }
 
-    cameraYaw += carBody.angularVelocity.y * deltaTime
+    cameraYaw += carBody.angularVelocity.y * (1 / 60);
 
     // --- FORCE FLIP COMPLETION (prevents side-stall) ---
     if (isFlipping) {
-        flipTimer -= deltaTime;
+        flipTimer -= 1 / 60;
+
         carBody.angularVelocity.x = flipAxis.x * 12;
         carBody.angularVelocity.y = flipAxis.y * 12;
         carBody.angularVelocity.z = flipAxis.z * 12;
@@ -882,7 +883,7 @@ if (isCarOnGround) {
     carBody.velocity.z -= right.z * lateralSpeed * grip;
 }
 
-    world.step(1 / 60, deltaTime, 3);
+    world.step(1 / 60);
 }
 
 function resetCameraInstant() {
@@ -1057,7 +1058,7 @@ if (gameState === 'replay') {
         camera.position.lerp(camPos, 0.08);
         camera.lookAt(replayGoalPos);
 
-        replayTimer -= deltaTime;
+        replayTimer -= 1 / 60;
         if (replayTimer <= 0) {
             resetGame();
         }
@@ -1071,15 +1072,10 @@ if (gameState === 'replay') {
         camera.lookAt(targetLookAt);
     }
 
-let lastTime = performance.now() / 1000;
 
 function animate() {
     requestAnimationFrame(animate);
     if(!gameStarted) return;
-
-    const now = performance.now() / 1000;
-    const deltaTime = now - lastTime;
-    lastTime = now;
 
     if(gameState === 'replay') {
         if(replayIndex < replayFrames.length){
@@ -1091,7 +1087,7 @@ function animate() {
             replayIndex++;
         }
     } else {
-        updatePhysics(deltaTime);
+        updatePhysics();
         checkGoal();
         recordReplayFrame();
     }
@@ -1101,7 +1097,7 @@ function animate() {
     ballMesh.position.copy(ballBody.position);
     ballMesh.quaternion.copy(ballBody.quaternion);
 
-    updateCamera(deltaTime);
+    updateCamera();
     renderer.render(scene, camera);
 }
 
@@ -1171,5 +1167,3 @@ window.addEventListener('keydown', (e) => {
 </script>
 </body>
 </html>
-
-
