@@ -37,30 +37,39 @@
     html, body {
         touch-action: none;
     }
-</style>
 
-	<style>
-    .touch-zone {
-        position: fixed;
-        top: 0;
-        width: 50vw;
-        height: 100vh;
-        z-index: 19;
-        touch-action: none;
-    }
-    #left-zone {
-        left: 0;
-    }
-    #right-zone {
-        right: 0;
-    }
+
+#joystick {
+    position: fixed;
+    bottom: 40px;
+    left: 40px;
+    width: 140px;
+    height: 140px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.2);
+    touch-action: none;
+}
+
+#stick {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 60px;
+    height: 60px;
+    background: rgba(255,255,255,0.3);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    touch-action: none;
+}
 </style>
 
 </head>
 <body>
 
-<div id="left-zone" class="touch-zone"></div>
-<div id="right-zone" class="touch-zone"></div>
+<div id="joystick">
+    <div id="stick"></div>
+</div>
 
 <div id="menuOverlay">
     <div id="menuBox">
@@ -1617,6 +1626,7 @@ window.addEventListener('keydown', (e) => {
 </script>
 </body>
 </html>
+
 
 
 
