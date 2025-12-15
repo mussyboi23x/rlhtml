@@ -197,9 +197,9 @@
     let REPLAY_LENGTH = 5; // seconds to replay
     let REPLAY_FPS = 60;   // how many frames per second
     let gameStarted = false;
-let botBody, botMesh;
-let gameMode = 'freeplay';
-
+    let botBody, botMesh;
+    let gameMode = 'freeplay';
+	let mobileControlsEnabled = true;
 let botInputs = {
     up: false,
     down: false,
@@ -1679,6 +1679,7 @@ window.addEventListener('keydown', (e) => {
 </script>
 </body>
 </html>
+
 
 
 
