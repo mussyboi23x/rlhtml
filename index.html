@@ -152,10 +152,7 @@
 
 <div id="info">
     <div id="score"><span style="color:#4488FF">BLUE: 0</span> - <span style="color:#FF8833">ORANGE: 0</span></div>
-    <div class="controls">
-        <b>KBM:</b> WASD / ARROWS to Drive | <b>Q/E</b> for Air Roll | <b>SPACE (x2)</b> to Jump/Flip | <b>SHIFT</b> to Boost | <b>ENTER</b> to Switch Camera | R to Reset<br>
-        <b>Controller:</b> Left Stick to Drive/Steer | <b>A/X</b> to Jump/Flip | <b>RT/R2</b> to Boost | <b>LB/RB</b> for Air Roll | <b>X/Square</b> to Switch Camera
-    </div>
+    <div class="controls">WASD / ARROWS to Drive | <b>Q/E</b> for Air Roll | <b>SPACE (x2)</b> to Jump/Flip | <b>SHIFT</b> to Boost | <b>ENTER</b> to Switch Camera | R to Reset</div>
     <div id="cameraMode">Camera: Car Cam</div>
 </div>
 <div id="loading">Loading Engine...</div>
@@ -166,20 +163,20 @@
 <script>
     // --- CONFIGURATION ---
     const SCALE_FACTOR = 4;
-    const FIELD_W = 60 * SCALE_FACTOR;    
+    const FIELD_W = 60 * SCALE_FACTOR;   
     const FIELD_L = 100 * SCALE_FACTOR;  
-    const ARENA_HEIGHT = 80;    
-    const GOAL_WIDTH = 50;    
+    const ARENA_HEIGHT = 80; 
+    const GOAL_WIDTH = 50; 
     const GOAL_DEPTH = 10;
     const GOAL_HEIGHT = 25;
     const CAR_SIZE = { w: 2, h: 1, l: 4 };
-    const BALL_RADIUS = 5;    
+    const BALL_RADIUS = 5; 
     
     // NEW CONSTANT FOR WALLS
-    const WALL_THICKNESS = 5;    
+    const WALL_THICKNESS = 5; 
     
     // Derived Constants
-    const BACKBOARD_HEIGHT = GOAL_HEIGHT * 2.5;    
+    const BACKBOARD_HEIGHT = GOAL_HEIGHT * 2.5; 
     const END_WALL_LENGTH = (FIELD_W - GOAL_WIDTH) / 2;
     
     // --- GLOBALS ---
@@ -194,20 +191,15 @@
     let replayTimer = 0;
     let replayGoalPos = new THREE.Vector3();
     let replayBuffer = [];    // stores recorded frames
-    let replayFrames = [];    // **NEW:** The array used for playback (initialized in score())
     let replayIndex = 0;      // current frame for replay
     let isRecordingReplay = false;
     let isReplaying = false;
-    const REPLAY_LENGTH = 5; // seconds to replay
-    const REPLAY_FPS = 60;    // how many frames per second
+    let REPLAY_LENGTH = 5; // seconds to replay
+    let REPLAY_FPS = 60;   // how many frames per second
     let gameStarted = false;
     let botBody, botMesh;
     let gameMode = 'freeplay';
 	let mobileControlsEnabled = false;
-    
-    // NEW GLOBAL FOR GAMEPAD
-    let gamepad; 
-
 let botInputs = {
     up: false,
     down: false,
@@ -216,20 +208,16 @@ let botInputs = {
     shift: false
 };
 
-// TWEAK 1: Update inputs to include analog values
-let inputs = { 
-    // KBM Digital Inputs (set by keyboard handler)
-    up: false, down: false, left: false, right: false, space: false, shift: false,
-    q: false, e: false, enter: false,
-    
-    // Analog Inputs (set by joystick/gamepad handler, 0.0 to 1.0 or -1.0 to 1.0)
-    driveAnalog: 0.0, // -1.0 (reverse) to 1.0 (forward)
-    steerAnalog: 0.0, // -1.0 (left) to 1.0 (right)
-    
-    // Aerial flags
-    W_aerialReady: false, S_aerialReady: false, A_aerialReady: false,
-    D_aerialReady: false, Q_aerialReady: false, E_aerialReady: false  
-};
+
+
+
+
+    let inputs = { 
+        up: false, down: false, left: false, right: false, space: false, shift: false,
+        q: false, e: false, enter: false,
+        W_aerialReady: false, S_aerialReady: false, A_aerialReady: false,
+        D_aerialReady: false, Q_aerialReady: false, E_aerialReady: false  
+    };
     
     let scores = { blue: 0, orange: 0 };
     let gameState = 'playing';
@@ -238,18 +226,18 @@ let inputs = {
 
     // --- AIRDODGE GLOBALS ---
     let lastJumpTime = 0;
-    const DOUBLE_JUMP_LOCKOUT = 1.25;    
+    const DOUBLE_JUMP_LOCKOUT = 1.25; 
     let hasDoubleJumped = false;
     const FLIP_IMPULSE = 35 * SCALE_FACTOR;
-    const FORWARD_FLIP_IMPULSE = 45 * SCALE_FACTOR;    
-    const FLIP_ROTATION = 1.0;    
+    const FORWARD_FLIP_IMPULSE = 45 * SCALE_FACTOR; 
+    const FLIP_ROTATION = 1.0; 
     
     // MOVEMENT CONSTANTS
     const BASE_SPEED = 20 * SCALE_FACTOR;
-    const BOOST_SPEED = 20 * SCALE_FACTOR;    
-    const TURN_RATE = 0.032;    
-    const JUMP_VELOCITY = 30 * Math.sqrt(SCALE_FACTOR);    
-    const BOOST_VELOCITY_ADD = 1 * SCALE_FACTOR;    
+    const BOOST_SPEED = 20 * SCALE_FACTOR; 
+    const TURN_RATE = 0.032; 
+    const JUMP_VELOCITY = 30 * Math.sqrt(SCALE_FACTOR); 
+    const BOOST_VELOCITY_ADD = 1 * SCALE_FACTOR; 
     
     const BLUE_GOAL_LINE = -FIELD_L/2;
     const ORANGE_GOAL_LINE = FIELD_L/2;
@@ -260,7 +248,7 @@ let inputs = {
     function init() {
         // 1. SETUP THREE.JS
         scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x0A0A1F);    
+        scene.background = new THREE.Color(0x0A0A1F); 
         scene.fog = new THREE.Fog(0x0A0A1F, FIELD_L * 0.4, FIELD_L * 1.5);
 
         camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -271,7 +259,7 @@ let inputs = {
         document.body.appendChild(renderer.domElement);
 
         // LIGHTING
-        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x112211, 1.0);    
+        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x112211, 1.0); 
         scene.add(hemiLight);
 
         const dirLight = new THREE.DirectionalLight(0xffffff, 1.0);
@@ -285,7 +273,7 @@ let inputs = {
 
         // 2. SETUP CANNON.JS PHYSICS
         world = new CANNON.World();
-        world.gravity.set(0, -150, 0);    
+        world.gravity.set(0, -150, 0); 
         world.broadphase = new CANNON.NaiveBroadphase();
         world.solver.iterations = 10;
 
@@ -294,8 +282,8 @@ let inputs = {
         const objMat = new CANNON.Material();
         
         // --- ZERO GROUND FRICTION ---
-        const objContactMat = new CANNON.ContactMaterial(groundMat, objMat, { friction: 0.0, restitution: 0.5 });    
-        const ballContactMat = new CANNON.ContactMaterial(objMat, objMat, { friction: 0.0, restitution: 0.55 });    
+        const objContactMat = new CANNON.ContactMaterial(groundMat, objMat, { friction: 0.0, restitution: 0.5 }); 
+        const ballContactMat = new CANNON.ContactMaterial(objMat, objMat, { friction: 0.0, restitution: 0.55 }); 
 
         world.addContactMaterial(objContactMat);
         world.addContactMaterial(ballContactMat);
@@ -304,18 +292,15 @@ let inputs = {
 
         // 3. BUILD WORLD
         createField();
-        createCeiling();    
-        createCar();    
+        createCeiling(); 
+        createCar(); 
         createBall();
-        createScenery();    
+        createScenery(); 
 
         // 4. EVENTS
         window.addEventListener('resize', onWindowResize, false);
         window.addEventListener('keydown', (e) => handleKey(e, true));
         window.addEventListener('keyup', (e) => handleKey(e, false));
-        
-        setupMobileControls(); 
-        setupGamepadListeners(); // ADD GAMEPAD LISTENERS
         
         document.getElementById('loading').style.display = 'none';
     }
@@ -327,7 +312,6 @@ let inputs = {
         body.addShape(shape);
         // Position Y is y + h/2 (where y is the ground level 0)
         body.position.set(x, y + h/2, z);
-        body.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 1, 0), 0); // Ensure orientation is set
         world.addBody(body);
         
         const geo = new THREE.BoxGeometry(w, h, d);
@@ -345,10 +329,10 @@ let inputs = {
     }
 
     function createScenery() {
-        const sceneryHeight = ARENA_HEIGHT * 4;    
-        const sceneryGroundColor = 0x113309;    
-        const sceneryTreeColor = 0x114411;    
-        const offset = 100;    
+        const sceneryHeight = ARENA_HEIGHT * 4; 
+        const sceneryGroundColor = 0x113309; 
+        const sceneryTreeColor = 0x114411; 
+        const offset = 100; 
         const totalLength = FIELD_L * 2;
         const totalWidth = FIELD_W * 2;
 
@@ -356,11 +340,11 @@ let inputs = {
         const outerGroundMat = new THREE.MeshStandardMaterial({ color: sceneryGroundColor, roughness: 0.8, side: THREE.DoubleSide });
         const outerGround = new THREE.Mesh(outerGroundGeo, outerGroundMat);
         outerGround.rotation.x = -Math.PI / 2;
-        outerGround.position.y = -5;    
+        outerGround.position.y = -5; 
         outerGround.receiveShadow = true;
         scene.add(outerGround);
 
-        const treeDensity = 20;    
+        const treeDensity = 20; 
         const treeRadius = 5;
         const treeGeo = new THREE.CylinderGeometry(treeRadius, treeRadius, sceneryHeight, 8);
         const treeMat = new THREE.MeshStandardMaterial({ color: sceneryTreeColor });
@@ -400,9 +384,9 @@ let inputs = {
     }
 
     function createCeiling() {
-        const CEILING_X_VISUAL = FIELD_W + WALL_THICKNESS * 2;    
+        const CEILING_X_VISUAL = FIELD_W + WALL_THICKNESS * 2; 
         // Calculate the required Z length based on the new wall positions
-        const CEILING_Z_VISUAL = FIELD_L + GOAL_DEPTH * 2 + WALL_THICKNESS;    
+        const CEILING_Z_VISUAL = FIELD_L + GOAL_DEPTH * 2 + WALL_THICKNESS; 
 
         const ceilingGeo = new THREE.PlaneGeometry(CEILING_X_VISUAL, CEILING_Z_VISUAL);
         const ceilingMat = new THREE.MeshBasicMaterial({ color: 0x444488, transparent: true, opacity: 0.1, side: THREE.DoubleSide });
@@ -445,23 +429,23 @@ let inputs = {
 
         // A. SIDE WALLS (+X and -X)
         // Total side wall length must cover the FIELD_L plus the two goal enclosures and the wall thickness at the ends.
-        const TOTAL_SIDE_WALL_LENGTH = FIELD_L + GOAL_DEPTH * 2 + WALL_THICKNESS;    
+        const TOTAL_SIDE_WALL_LENGTH = FIELD_L + GOAL_DEPTH * 2 + WALL_THICKNESS; 
         
         // Right Side (+X) - centered at Z=0
-        createBoundary(HALF_FIELD_W + HALF_WALL_THICKNESS, 0, 0, WALL_THICKNESS, WALL_HEIGHT, TOTAL_SIDE_WALL_LENGTH, 0xAAAAAA, 0.2, true);    
+        createBoundary(HALF_FIELD_W + HALF_WALL_THICKNESS, 0, 0, WALL_THICKNESS, WALL_HEIGHT, TOTAL_SIDE_WALL_LENGTH, 0xAAAAAA, 0.2, true); 
         // Left Side (-X) - centered at Z=0
-        createBoundary(-HALF_FIELD_W - HALF_WALL_THICKNESS, 0, 0, WALL_THICKNESS, WALL_HEIGHT, TOTAL_SIDE_WALL_LENGTH, 0xAAAAAA, 0.2, true);    
+        createBoundary(-HALF_FIELD_W - HALF_WALL_THICKNESS, 0, 0, WALL_THICKNESS, WALL_HEIGHT, TOTAL_SIDE_WALL_LENGTH, 0xAAAAAA, 0.2, true); 
 
         // B. END WALLS & BACKBOARDS (+Z and -Z)
         
         // Z-positions for all end walls (centered)
-        const ORANGE_END_Z_CENTER = ORANGE_GOAL_LINE + GOAL_DEPTH + HALF_WALL_THICKNESS;    
+        const ORANGE_END_Z_CENTER = ORANGE_GOAL_LINE + GOAL_DEPTH + HALF_WALL_THICKNESS; 
         const BLUE_END_Z_CENTER = BLUE_GOAL_LINE - GOAL_DEPTH - HALF_WALL_THICKNESS;
         
         // Calculations for the split end walls (the non-goal sections)
         const W_split = (FIELD_W - GOAL_WIDTH) / 2;
         // The width of the split wall piece, extended to meet the side wall by WALL_THICKNESS
-        const W_split_final = W_split + WALL_THICKNESS;    
+        const W_split_final = W_split + WALL_THICKNESS; 
         
         // Center X for the split walls, which is halfway between the goal edge (GOAL_WIDTH/2) and the outer arena edge (FIELD_W/2 + WALL_THICKNESS/2)
         const baseSplitCenter = HALF_GOAL_WIDTH + W_split / 2;
@@ -473,12 +457,12 @@ let inputs = {
         const orangeBackboardColor = 0xFF8800;
         
         // Backboard (Goal Area) - Width: GOAL_WIDTH, Centered at X=0
-        createBoundary(0, 0, ORANGE_END_Z_CENTER, GOAL_WIDTH, WALL_HEIGHT, WALL_THICKNESS, orangeBackboardColor, 0.5, true);    
+        createBoundary(0, 0, ORANGE_END_Z_CENTER, GOAL_WIDTH, WALL_HEIGHT, WALL_THICKNESS, orangeBackboardColor, 0.5, true); 
         
-        // Right Side Wall Piece (Beside Goal)    
+        // Right Side Wall Piece (Beside Goal) 
         createBoundary(rightSplitXCenter, 0, ORANGE_END_Z_CENTER, W_split_final, WALL_HEIGHT, WALL_THICKNESS, 0xAAAAAA, 0.2, true);
         
-        // Left Side Wall Piece (Beside Goal)    
+        // Left Side Wall Piece (Beside Goal) 
         createBoundary(leftSplitXCenter, 0, ORANGE_END_Z_CENTER, W_split_final, WALL_HEIGHT, WALL_THICKNESS, 0xAAAAAA, 0.2, true);
 
         
@@ -486,7 +470,7 @@ let inputs = {
         const blueBackboardColor = 0x0044FF;
 
         // Backboard (Goal Area) - Width: GOAL_WIDTH, Centered at X=0
-        createBoundary(0, 0, BLUE_END_Z_CENTER, GOAL_WIDTH, WALL_HEIGHT, WALL_THICKNESS, blueBackboardColor, 0.5, true);    
+        createBoundary(0, 0, BLUE_END_Z_CENTER, GOAL_WIDTH, WALL_HEIGHT, WALL_THICKNESS, blueBackboardColor, 0.5, true); 
 
         // Right Side Wall Piece (Beside Goal)
         createBoundary(rightSplitXCenter, 0, BLUE_END_Z_CENTER, W_split_final, WALL_HEIGHT, WALL_THICKNESS, 0xAAAAAA, 0.2, true);
@@ -501,11 +485,10 @@ let inputs = {
 
     function createCar() {
         const shape = new CANNON.Box(new CANNON.Vec3(CAR_SIZE.w, CAR_SIZE.h, CAR_SIZE.l));
-        carBody = new CANNON.Body({ mass: 150 * SCALE_FACTOR, material: physicsMaterials.object });    
+        carBody = new CANNON.Body({ mass: 150 * SCALE_FACTOR, material: physicsMaterials.object }); 
         carBody.addShape(shape);
-        // Correct Player Car (Blue) spawn to -Z side
-        carBody.position.set(0, 2, -FIELD_L * 0.3);
-        carBody.linearDamping = 0.01;    
+        carBody.position.set(0, 2, FIELD_L * 0.3);
+        carBody.linearDamping = 0.01; 
         carBody.angularDamping = 0.9;
         world.addBody(carBody);
 
@@ -526,7 +509,7 @@ let inputs = {
 
         const wheelGeo = new THREE.CylinderGeometry(0.8, 0.8, 0.5, 12);
         const wheelMat = new THREE.MeshStandardMaterial({ color: 0x111111 });
-        const positions = [[-2, -1, 2], [2, -1, 2], [-2, -1, 2], [2, -1, -2]];
+        const positions = [[-2, -1, 2], [2, -1, 2], [-2, -1, -2], [2, -1, -2]];
         positions.forEach(pos => {
             const w = new THREE.Mesh(wheelGeo, wheelMat);
             w.rotation.z = Math.PI / 2;
@@ -548,8 +531,7 @@ function createBotCar() {
     });
 
     botBody.addShape(shape);
-    // Correct Bot Car (Orange) spawn to +Z side
-    botBody.position.set(0, 2, FIELD_L * 0.3);
+    botBody.position.set(0, 2, -FIELD_L * 0.3); // Correct physics spawn
     botBody.linearDamping = 0.01;
     botBody.angularDamping = 0.9;
     world.addBody(botBody);
@@ -569,7 +551,7 @@ function createBotCar() {
     
     // Add Roof
     const roofGeo = new THREE.BoxGeometry(3.5, 0.5, 2);
-    const roofMat = new THREE.MeshStandardMaterial({ color: 0x222222 });    
+    const roofMat = new THREE.MeshStandardMaterial({ color: 0x222222 }); 
     const roof = new THREE.Mesh(roofGeo, roofMat);
     roof.position.y = 1;
     roof.position.z = -1;
@@ -589,29 +571,18 @@ function createBotCar() {
     scene.add(botMesh);
 }
 
-// Controls logic now mixes KBM, Mobile, and Gamepad inputs.
 function applyCarControls(body, controlInputs) {
     const isCarOnGround = body.position.y < (CAR_SIZE.h * 1.5);
     const forwardVector = new CANNON.Vec3(0, 0, -1);
     const rotatedForward = body.quaternion.vmult(forwardVector);
 
-    // --- 1. Calculate Combined Drive Factor (Analog Priority) ---
-    let driveFactor = 0; // -1.0 (reverse) to 1.0 (forward)
-    
-    if (Math.abs(controlInputs.driveAnalog) > 0.05) {
-        driveFactor = controlInputs.driveAnalog; // Use analog value (Mobile or Gamepad)
-        // Analog drive is full speed (1.0) for forward, half speed (-0.5) for reverse
-        if (driveFactor < 0) {
-            driveFactor *= 0.5; // Half speed for reverse
-        }
-    } else if (controlInputs.up) {
-        driveFactor = 1.0; // Digital forward
+    // 1. Movement Logic (Accelerates the car in its forward direction)
+    let targetSpeed = 0;
+    if (controlInputs.up) {
+        targetSpeed = BASE_SPEED;
     } else if (controlInputs.down) {
-        driveFactor = -0.5; // Digital reverse (half speed)
+        targetSpeed = -BASE_SPEED * 0.5;
     }
-    
-    // Apply speed based on the combined drive factor
-    const targetSpeed = BASE_SPEED * driveFactor; 
 
     const targetVelocity = rotatedForward.scale(targetSpeed);
     const accelFactor = 0.05;
@@ -628,29 +599,21 @@ function applyCarControls(body, controlInputs) {
     
     // 3. Ground Steering (Yaw rotation)
     if (isCarOnGround) {
-        // --- Calculate Combined Steer Factor (Analog Priority) ---
-        let steerFactor = 0; // -1.0 (left) to 1.0 (right)
-        
-        if (Math.abs(controlInputs.steerAnalog) > 0.05) {
-            steerFactor = controlInputs.steerAnalog; // Use analog value (Mobile or Gamepad)
-        } else {
-            steerFactor = (controlInputs.left ? 1 : 0) - (controlInputs.right ? 1 : 0); // Digital value (KBM)
-        }
+        const steer = (controlInputs.left ? 1 : 0) - (controlInputs.right ? 1 : 0);
 
-        if (steerFactor !== 0) {
+        if (steer !== 0) {
             const speed = Math.sqrt(
                 body.velocity.x ** 2 +
                 body.velocity.z ** 2
             );
 
             if (speed > 0.2) {
-                // Apply the analog/digital factor to the steering strength
-                const turnStrength = steerFactor * TURN_RATE * (speed / BASE_SPEED);
+                const turnStrength = TURN_RATE * (speed / BASE_SPEED);
 
                 const rot = new CANNON.Quaternion();
                 rot.setFromAxisAngle(
                     new CANNON.Vec3(0, 1, 0),
-                    turnStrength
+                    steer * turnStrength
                 );
 
                 body.quaternion = rot.mult(body.quaternion);
@@ -672,7 +635,7 @@ function applyCarControls(body, controlInputs) {
         const shape = new CANNON.Sphere(BALL_RADIUS);
         ballBody = new CANNON.Body({ mass: 10 * SCALE_FACTOR, material: physicsMaterials.object });
         ballBody.addShape(shape);
-        ballBody.position.set(0, BALL_RADIUS * 2, 0);    
+        ballBody.position.set(0, BALL_RADIUS * 2, 0); 
         ballBody.linearDamping = 0.1;
         ballBody.angularDamping = 0.1;
         world.addBody(ballBody);
@@ -687,7 +650,7 @@ function applyCarControls(body, controlInputs) {
         ballMesh.add(light);
     }
 
-function airDodge() {
+    function airDodge() {
     const currentTime = performance.now() / 1000;
     if (currentTime - lastJumpTime > DOUBLE_JUMP_LOCKOUT || hasDoubleJumped) return;
 
@@ -698,63 +661,41 @@ function airDodge() {
     carBody.angularDamping = 0.05;
 
     const forward = new CANNON.Vec3(0, 0, -1);
-    const right = new CANNON.Vec3(1, 0, 0); // Swapped sign for CANNON convention
+    const right = new CANNON.Vec3(-1, 0, 0);
+    const left = new CANNON.Vec3(1, 0, 0);
     const down = new CANNON.Vec3(0, 0, 1);
 
-    // Get car orientation vectors
     const f = carBody.quaternion.vmult(forward);
     const r = carBody.quaternion.vmult(right);
+    const l = carBody.quaternion.vmult(left);
+    const d = carBody.quaternion.vmult(down);
 
     flipAxis.set(0, 0, 0);
 
-    // --- ANALOG INPUT PRIORITY FOR FLIP DIRECTION ---
-    const stickMagnitude = Math.sqrt(inputs.driveAnalog * inputs.driveAnalog + inputs.steerAnalog * inputs.steerAnalog);
-    
-    if (stickMagnitude > 0.4) {
-        // Calculate flip direction based on stick angle
-        const stickAngle = Math.atan2(inputs.steerAnalog, inputs.driveAnalog);
-        
-        // Convert the angle to a world-relative impulse vector (cannon convention: X=right, Z=forward)
-        const worldImpulseX = Math.sin(stickAngle) * 1;
-        const worldImpulseZ = Math.cos(stickAngle) * 1;
-        
-        // Create an impulse vector relative to the car's orientation
-        const carLocalImpulse = new CANNON.Vec3(worldImpulseX, 0, worldImpulseZ);
-        
-        // Rotate the impulse vector by the car's quaternion to get world impulse
-        const worldImpulse = carBody.quaternion.vmult(carLocalImpulse);
-        
-        // Apply velocity boost in the direction of the stick
-        carBody.velocity.vadd(worldImpulse.scale(FLIP_IMPULSE), carBody.velocity);
+if (inputs.up) {                 // front flip
+    flipAxis.copy(r); // FLIPPED
+    carBody.velocity.vadd(f.scale(-18), carBody.velocity);
+} else if (inputs.down) {         // back flip
+    flipAxis.copy(l).scale(-1); // FLIPPED
+    carBody.velocity.vadd(f.scale(14), carBody.velocity);
+} else if (inputs.right) {        // right flip
+    flipAxis.copy(f); // FLIPPED
+    carBody.velocity.vadd(r.scale(14), carBody.velocity);
+} else if (inputs.left) {         // left flip
+    flipAxis.copy(d); // FLIPPED
+    carBody.velocity.vadd(r.scale(-14), carBody.velocity);
 
-        // Apply angular velocity for the flip animation.
-        // The flip axis should be perpendicular to the impulse direction in the car's frame.
-        // Cross product of UP (0,1,0) and the car's local stick direction (worldImpulse, unrotated)
-        const upVector = new CANNON.Vec3(0, 1, 0);
-        const localFlipAxis = new CANNON.Vec3();
-        upVector.cross(carLocalImpulse, localFlipAxis);
-        
-        // Rotate the flip axis into world space
-        carBody.quaternion.vmult(localFlipAxis, flipAxis);
-        
-        // Apply rotation
-        carBody.angularVelocity.set(
-            flipAxis.x * 12,
-            flipAxis.y * 12,
-            flipAxis.z * 12
-        );
-        
-    } else if (inputs.up) { // Digital front flip fallback
-        flipAxis.copy(r).scale(-1); // Pitch down axis
-        carBody.velocity.vadd(f.scale(-18), carBody.velocity);
-        carBody.angularVelocity.set(flipAxis.x * 12, flipAxis.y * 12, flipAxis.z * 12);
-        
     } else {
-        // Simple second jump if no direction input is provided
         carBody.velocity.y += JUMP_VELOCITY * 0.5;
         isFlipping = false;
         return;
     }
+
+    carBody.angularVelocity.set(
+        flipAxis.x * 12,
+        flipAxis.y * 12,
+        flipAxis.z * 12
+    );
 }
 
     
@@ -773,33 +714,33 @@ function airDodge() {
         }
 
         switch(key) {
-            case 'w': case 'arrowup':    
-                inputs.up = isDown;    
+            case 'w': case 'arrowup': 
+                inputs.up = isDown; 
                 updateAerialReady('W', isDown);
                 break;
-            case 's': case 'arrowdown':    
-                inputs.down = isDown;    
+            case 's': case 'arrowdown': 
+                inputs.down = isDown; 
                 updateAerialReady('S', isDown);
                 break;
-            case 'a': case 'arrowleft':    
-                inputs.left = isDown;    
+            case 'a': case 'arrowleft': 
+                inputs.left = isDown; 
                 updateAerialReady('A', isDown);
                 break;
-            case 'd': case 'arrowright':    
-                inputs.right = isDown;    
+            case 'd': case 'arrowright': 
+                inputs.right = isDown; 
                 updateAerialReady('D', isDown);
                 break;
-            case 'q':    
-                inputs.q = isDown;    
+            case 'q': 
+                inputs.q = isDown; 
                 updateAerialReady('Q', isDown);
                 break;
-            case 'e':    
-                inputs.e = isDown;    
+            case 'e': 
+                inputs.e = isDown; 
                 updateAerialReady('E', isDown);
                 break;
             case ' ': inputs.space = isDown; break;
             case 'shift': inputs.shift = isDown; break;
-            case 'enter':    
+            case 'enter': 
                 if (isDown) {
                     cameraMode = (cameraMode === 'car') ? 'ball' : 'car';
                     document.getElementById('cameraMode').textContent = `Camera: ${cameraMode === 'car' ? 'Car Cam' : 'Ball Cam'}`;
@@ -811,11 +752,10 @@ function airDodge() {
         const isCarOnGround = carBody.position.y < (CAR_SIZE.h * 1.5);
         const currentTime = performance.now() / 1000;
         
-        if (inputs.space && !wasSpaceDown && isCarOnGround) {    
+        if (inputs.space && !wasSpaceDown && isCarOnGround) { 
             carBody.velocity.y = JUMP_VELOCITY;
             lastJumpTime = currentTime;
             
-            // Clear digital flags that would trigger a flip if held down
             inputs.W_aerialReady = inputs.up ? false : inputs.W_aerialReady;
             inputs.S_aerialReady = inputs.down ? false : inputs.S_aerialReady;
             inputs.A_aerialReady = inputs.left ? false : inputs.A_aerialReady;
@@ -832,8 +772,7 @@ function airDodge() {
     }
 
     function resetGame() {
-        // Correct Player Car (Blue) spawn to -Z side
-        carBody.position.set(0, 2, -FIELD_L * 0.3);
+        carBody.position.set(0, 2, FIELD_L * 0.3);
         carBody.velocity.set(0, 0, 0);
         carBody.quaternion.set(0, 0, 0, 1);
         carBody.angularVelocity.set(0, 0, 0);
@@ -842,13 +781,12 @@ function airDodge() {
         ballBody.collisionFilterGroup = 1; // re-enable collisions
 
 
-        ballBody.position.set(0, BALL_RADIUS * 2, 0);    
+        ballBody.position.set(0, BALL_RADIUS * 2, 0); 
         ballBody.velocity.set(0, 0, 0);
         ballBody.angularVelocity.set(0, 0, 0);
 
         if (botBody) {
-             // Correct Bot Car (Orange) spawn to +Z side
-             botBody.position.set(0, 2, FIELD_L * 0.3);
+             botBody.position.set(0, 2, -FIELD_L * 0.3);
              botBody.velocity.set(0, 0, 0);
              botBody.quaternion.set(0, 0, 0, 1);
              botBody.angularVelocity.set(0, 0, 0);
@@ -864,18 +802,6 @@ function airDodge() {
         lastJumpTime = 0;
         hasDoubleJumped = false;
         
-        // Reset analog and digital inputs on game reset
-        inputs.driveAnalog = 0.0;
-        inputs.steerAnalog = 0.0;
-        inputs.up = false;
-        inputs.down = false;
-        inputs.left = false;
-        inputs.right = false;
-        inputs.space = false;
-        inputs.shift = false;
-        inputs.q = false;
-        inputs.e = false;
-        
         gameState = 'playing';
         
         inputs.W_aerialReady = false;
@@ -884,9 +810,6 @@ function airDodge() {
         inputs.D_aerialReady = false;
         inputs.Q_aerialReady = false;
         inputs.E_aerialReady = false;
-        
-        // Clear replay array when game resets
-        replayFrames = [];
     }
 
     function checkGoal() {
@@ -895,12 +818,12 @@ function airDodge() {
         const ballX = ballBody.position.x;
         const ballZ = ballBody.position.z;
         const ballY = ballBody.position.y;
-        const goalRange = GOAL_WIDTH / 2;    
+        const goalRange = GOAL_WIDTH / 2; 
 
         // The check still uses the original GOAL_LINE positions, defining the scoring zone.
         if (ballZ < BLUE_GOAL_LINE && Math.abs(ballX) < goalRange && ballY < GOAL_HEIGHT) {
             score('orange');
-        }    
+        } 
         else if (ballZ > ORANGE_GOAL_LINE && Math.abs(ballX) < goalRange && ballY < GOAL_HEIGHT) {
             score('blue');
         }
@@ -928,546 +851,539 @@ function score(team) {
     // Freeze car motion
     carBody.velocity.set(0, 0, 0);
     carBody.angularVelocity.set(0, 0, 0);
-    if (botBody) {
-        botBody.velocity.set(0, 0, 0);
-        botBody.angularVelocity.set(0, 0, 0);
-    }
 
     // ENTER REPLAY MODE
     ballMesh.visible = true;
-    replayFrames = [...replayBuffer]; // COPY the last few seconds for playback
+    replayFrames = [...replayBuffer]; // last few seconds
     replayIndex = 0;
     replayTimer = 5.1;
     gameState = 'replay';
 }
 
     
-function updateAerialControls() {
-    if (hasDoubleJumped) return;
+    function updateAerialControls() {
+        if (hasDoubleJumped) return;
 
-    const forwardVector = new CANNON.Vec3(0, 0, -1);
-    const rightVector = new CANNON.Vec3(1, 0, 0);
-    const upVector = new CANNON.Vec3(0, 1, 0);
+        const forwardVector = new CANNON.Vec3(0, 0, -1);
+        const rightVector = new CANNON.Vec3(1, 0, 0);
+        const upVector = new CANNON.Vec3(0, 1, 0);
 
-    const rotatedForward = carBody.quaternion.vmult(forwardVector);
-    const rotatedRight = carBody.quaternion.vmult(rightVector);
-    const rotatedUp = carBody.quaternion.vmult(upVector);
+        const rotatedForward = carBody.quaternion.vmult(forwardVector);
+        const rotatedRight = carBody.quaternion.vmult(rightVector);
+        const rotatedUp = carBody.quaternion.vmult(upVector);
 
-    const AERIAL_ROTATION_RATE = 1.5;    
-    const AIR_ROLL_MULTIPLIER = 2.0;    
-    const MAX_AERIAL_ANGULAR_SPEED = 10.0;    
+        const AERIAL_ROTATION_RATE = 1.5; 
+        const AIR_ROLL_MULTIPLIER = 2.0; 
+        const MAX_AERIAL_ANGULAR_SPEED = 10.0; 
 
-    function isSpeedCapped(axis, isPositiveDirection) {
-        const currentSpeed = carBody.angularVelocity.dot(axis);
-        if (isPositiveDirection) {
-            return currentSpeed > MAX_AERIAL_ANGULAR_SPEED;
-        } else {
-            return currentSpeed < -MAX_AERIAL_ANGULAR_SPEED;
+        function isSpeedCapped(axis, isPositiveDirection) {
+            const currentSpeed = carBody.angularVelocity.dot(axis);
+            if (isPositiveDirection) {
+                return currentSpeed > MAX_AERIAL_ANGULAR_SPEED;
+            } else {
+                return currentSpeed < -MAX_AERIAL_ANGULAR_SPEED;
+            }
         }
-    }
-    
-    // --- Pitch/Yaw Control (Gamepad/Analog Priority) ---
-    if (gamepad) {
-        const pitch = inputs.driveAnalog; // Y-axis from stick
-        const yaw = inputs.steerAnalog; // X-axis from stick
         
-        if (Math.abs(pitch) > 0.1) {
-            const pitchRate = pitch * AERIAL_ROTATION_RATE;
-            // Apply rotation around the right axis. The inputs.driveAnalog is -1(up) to 1(down)
-            // Cannon right vector is +X. Pitching nose up is rotating around -X.
-            if (pitch < 0 && !isSpeedCapped(rotatedRight, false)) { // Nose Up
-                 carBody.angularVelocity.vsub(rotatedRight.scale(-pitchRate), carBody.angularVelocity);
-            } else if (pitch > 0 && !isSpeedCapped(rotatedRight, true)) { // Nose Down
-                carBody.angularVelocity.vadd(rotatedRight.scale(pitchRate), carBody.angularVelocity);
-            }
-        }
-        if (Math.abs(yaw) > 0.1) {
-            const yawRate = yaw * AERIAL_ROTATION_RATE;
-            // Apply rotation around the up axis (Yaw)
-            if (yaw < 0 && !isSpeedCapped(rotatedUp, true)) { // Yaw Left
-                carBody.angularVelocity.vsub(rotatedUp.scale(yawRate), carBody.angularVelocity);
-            } else if (yaw > 0 && !isSpeedCapped(rotatedUp, false)) { // Yaw Right
-                carBody.angularVelocity.vadd(rotatedUp.scale(yawRate), carBody.angularVelocity);
-            }
-        }
-    } 
-    // --- Pitch Control (KBM Fallback) ---
-    else {
-        // Pitch Control (W/S) - Digital
+        // Pitch Control (W/S)
         if (inputs.up && inputs.W_aerialReady && !isSpeedCapped(rotatedRight, false)) {
-            carBody.angularVelocity.vsub(rotatedRight.scale(AERIAL_ROTATION_RATE), carBody.angularVelocity);    
+            carBody.angularVelocity.vsub(rotatedRight.scale(AERIAL_ROTATION_RATE), carBody.angularVelocity); 
         }
         if (inputs.down && inputs.S_aerialReady && !isSpeedCapped(rotatedRight, true)) {
-            carBody.angularVelocity.vadd(rotatedRight.scale(AERIAL_ROTATION_RATE), carBody.angularVelocity);    
+            carBody.angularVelocity.vadd(rotatedRight.scale(AERIAL_ROTATION_RATE), carBody.angularVelocity); 
         }
-    }
-
-
-    // --- Roll Control (Q/E) - Always Digital/KBM/Shoulder buttons ---
-    const rollRate = AERIAL_ROTATION_RATE * AIR_ROLL_MULTIPLIER;
-    if (inputs.q && inputs.Q_aerialReady && !isSpeedCapped(rotatedForward, false)) {
-        carBody.angularVelocity.vsub(rotatedForward.scale(rollRate), carBody.angularVelocity);
-    }
-    if (inputs.e && inputs.E_aerialReady && !isSpeedCapped(rotatedForward, true)) {
-        carBody.angularVelocity.vadd(rotatedForward.scale(rollRate), carBody.angularVelocity);
-    }
-
-    // --- Yaw Control (A/D) - KBM Fallback Only (Analog takes priority) ---
-    if (!gamepad) {
+        
+        // Roll Control (Q/E)
+        const rollRate = AERIAL_ROTATION_RATE * AIR_ROLL_MULTIPLIER;
+        if (inputs.q && inputs.Q_aerialReady && !isSpeedCapped(rotatedForward, true)) {
+            carBody.angularVelocity.vadd(rotatedForward.scale(rollRate), carBody.angularVelocity);
+        }
+        if (inputs.e && inputs.E_aerialReady && !isSpeedCapped(rotatedForward, false)) {
+            carBody.angularVelocity.vsub(rotatedForward.scale(rollRate), carBody.angularVelocity);
+        }
+        
+        // Yaw Control (A/D)
+        const yawRate = AERIAL_ROTATION_RATE * 0.5;
         if (inputs.left && inputs.A_aerialReady && !isSpeedCapped(rotatedUp, true)) {
-            carBody.angularVelocity.vsub(rotatedUp.scale(AERIAL_ROTATION_RATE), carBody.angularVelocity);
+            carBody.angularVelocity.vadd(rotatedUp.scale(yawRate), carBody.angularVelocity);
         }
         if (inputs.right && inputs.D_aerialReady && !isSpeedCapped(rotatedUp, false)) {
-            carBody.angularVelocity.vadd(rotatedUp.scale(AERIAL_ROTATION_RATE), carBody.angularVelocity);
+            carBody.angularVelocity.vsub(rotatedUp.scale(yawRate), carBody.angularVelocity);
         }
     }
 
-    // Apply air resistance to rotation
-    carBody.angularVelocity.scale(0.99, carBody.angularVelocity);
+function applyCarControls(body, controlInputs) {
+    const isCarOnGround = body.position.y < (CAR_SIZE.h * 1.5);
+
+    // 1. GROUND STEERING (ONLY SOURCE OF YAW)
+    if (isCarOnGround) {
+        const steer =
+            (controlInputs.left ? 1 : 0) -
+            (controlInputs.right ? 1 : 0);
+
+        if (steer !== 0) {
+            const speed = Math.sqrt(
+                body.velocity.x ** 2 +
+                body.velocity.z ** 2
+            );
+
+            if (speed > 0.2) {
+                const turnStrength = TURN_RATE * (speed / BASE_SPEED);
+
+                const rot = new CANNON.Quaternion();
+                rot.setFromAxisAngle(
+                    new CANNON.Vec3(0, 1, 0),
+                    steer * turnStrength
+                );
+
+                body.quaternion = rot.mult(body.quaternion);
+            }
+        }
+    }
+
+    // 2. Movement Logic (Ground Speed)
+    const forwardVector = new CANNON.Vec3(0, 0, -1);
+    const rotatedForward = body.quaternion.vmult(forwardVector);
+
+    let targetSpeed = 0;
+    if (controlInputs.up) {
+        targetSpeed = BASE_SPEED;
+    } else if (controlInputs.down) {
+        targetSpeed = -BASE_SPEED * 0.5;
+    }
+
+    const targetVelocity = rotatedForward.scale(targetSpeed);
+    const accelFactor = 0.05;
+
+    body.velocity.x = body.velocity.x * (1 - accelFactor) + targetVelocity.x * accelFactor;
+    body.velocity.z = body.velocity.z * (1 - accelFactor) + targetVelocity.z * accelFactor;
+
+    // ROCKET LEAGUE GROUND GRIP (kills side slide)
+    if (isCarOnGround) {
+        const rightVector = body.quaternion.vmult(new CANNON.Vec3(1, 0, 0));
+        const sideSpeed = body.velocity.dot(rightVector);
+
+        const SIDE_GRIP = 0.8; // increase = more grip
+        body.velocity.vsub(
+            rightVector.scale(sideSpeed * SIDE_GRIP),
+            body.velocity
+        );
+    }
+
+    // 3. Boost as Velocity Addition
+    if (controlInputs.shift) {
+        const boostImpulse = rotatedForward.scale(BOOST_VELOCITY_ADD);
+        body.velocity.vadd(boostImpulse, body.velocity);
+    }
+
+    // 5. Anti-Roll/Stabilization (Simplified for the bot)
+    if (isCarOnGround) {
+        const carUp = new CANNON.Vec3();
+        body.quaternion.vmult(new CANNON.Vec3(0, 1, 0), carUp);
+
+        const upVector = new CANNON.Vec3(0, 1, 0);
+        const correctionTorque = new CANNON.Vec3();
+        carUp.cross(upVector, correctionTorque);
+
+        const dot = carUp.dot(new CANNON.Vec3(0,1,0));
+        const angleFromUp = Math.acos(Math.min(Math.max(dot, -1), 1));
+        const uprightTorque = 50;
+        
+        if (angleFromUp > 0.05) {
+             body.angularVelocity.vadd(
+                correctionTorque.scale(angleFromUp > Math.PI / 3 ? uprightTorque : 0.5),
+                body.angularVelocity
+             );
+        }
+    }
+}
+// <<< ADDED FUNCTION FOR BOT CONTROL >>>
+
+function updatePhysics() {
+    if (gameState !== 'playing') return;
+
+    const isCarOnGround = carBody.position.y < (CAR_SIZE.h * 1.5);
+
+    // --- SUSPENSION / LANDING MOMENTUM ABSORPTION ---
+    if (isCarOnGround) {
+        hasDoubleJumped = false;
+        inputs.W_aerialReady = false;
+        inputs.S_aerialReady = false;
+        inputs.A_aerialReady = false;
+        inputs.D_aerialReady = false;
+        inputs.Q_aerialReady = false;
+        inputs.E_aerialReady = false;
+
+        // Absorb vertical bounce (simulate RL suspension)
+        const bounceDamp = 0.3;
+if (carBody.velocity.y < 0) {
+    carBody.velocity.y *= (1 - bounceDamp);
+} 
+
+    }
+
+// 1. GROUND STEERING (ONLY SOURCE OF YAW)
+if (isCarOnGround) {
+    const steer =
+        (inputs.left ? 1 : 0) -
+        (inputs.right ? 1 : 0);
+
+    if (steer !== 0) {
+        const speed = Math.sqrt(
+            carBody.velocity.x ** 2 +
+            carBody.velocity.z ** 2
+        );
+
+        if (speed > 0.2) {
+            const turnStrength = TURN_RATE * (speed / BASE_SPEED);
+
+            const rot = new CANNON.Quaternion();
+            rot.setFromAxisAngle(
+                new CANNON.Vec3(0, 1, 0),
+                steer * turnStrength
+            );
+
+            carBody.quaternion = rot.mult(carBody.quaternion);
+        }
+    }
+}
+
+
+
+    // 2. Movement Logic (Ground Speed)
+    const forwardVector = new CANNON.Vec3(0, 0, -1);
+    const rotatedForward = carBody.quaternion.vmult(forwardVector);
+
+    let targetSpeed = 0;
+    if (inputs.up) {
+        targetSpeed = BASE_SPEED;
+    } else if (inputs.down) {
+        targetSpeed = -BASE_SPEED * 0.5;
+    }
+
+    const targetVelocity = rotatedForward.scale(targetSpeed);
+    const accelFactor = 0.05;
+
+    carBody.velocity.x = carBody.velocity.x * (1 - accelFactor) + targetVelocity.x * accelFactor;
+    carBody.velocity.z = carBody.velocity.z * (1 - accelFactor) + targetVelocity.z * accelFactor;
+
+    // <<< ADDED: ROCKET LEAGUE GROUND GRIP (kills side slide)
+    if (isCarOnGround) {
+        const rightVector = carBody.quaternion.vmult(new CANNON.Vec3(1, 0, 0));
+        const sideSpeed = carBody.velocity.dot(rightVector);
+
+        const SIDE_GRIP = 0.8; // increase = more grip
+        carBody.velocity.vsub(
+            rightVector.scale(sideSpeed * SIDE_GRIP),
+            carBody.velocity
+        );
+    }
+
+    // 3. Boost as Velocity Addition
+    if (inputs.shift) {
+        const boostImpulse = rotatedForward.scale(BOOST_VELOCITY_ADD);
+        carBody.velocity.vadd(boostImpulse, carBody.velocity);
+    }
+
+    // 4. Aerial Control (Pitching, Yaw, Roll)
+    if (!isCarOnGround) {
+        updateAerialControls();
+    }
+
+    cameraYaw += carBody.angularVelocity.y * (1 / 60);
+
+    // --- FORCE FLIP COMPLETION (prevents side-stall) ---
+    if (isFlipping) {
+        flipTimer -= 1 / 60;
+
+        carBody.angularVelocity.x = flipAxis.x * 12;
+        carBody.angularVelocity.y = flipAxis.y * 12;
+        carBody.angularVelocity.z = flipAxis.z * 12;
+
+        if (flipTimer <= 0) {
+            isFlipping = false;
+            carBody.angularDamping = 0.9;
+        }
+    }
+
+    if (isCarOnGround) {
+        const carUp = new CANNON.Vec3();
+        carBody.quaternion.vmult(new CANNON.Vec3(0,1,0), carUp);
+
+        const dot = carUp.dot(new CANNON.Vec3(0,1,0));
+        const angleFromUp = Math.acos(Math.min(Math.max(dot, -1), 1));
+
+        const rollPitchCorrection = 0.5;
+        const uprightTorque = 50;
+
+        if (angleFromUp > 0.05 && angleFromUp < Math.PI / 3) {
+            const correctionAxis = new CANNON.Vec3();
+            carUp.cross(new CANNON.Vec3(0,1,0), correctionAxis);
+            carBody.angularVelocity.vadd(
+                correctionAxis.scale(rollPitchCorrection),
+                carBody.angularVelocity
+            );
+        }
+
+        if (angleFromUp >= Math.PI / 3) {
+            const correctionAxis = new CANNON.Vec3();
+            carUp.cross(new CANNON.Vec3(0,1,0), correctionAxis);
+            carBody.angularVelocity.vadd(
+                correctionAxis.scale(uprightTorque),
+                carBody.angularVelocity
+            );
+        }
+    }
+
+    // 5. Anti-Roll/Stabilization 
+    const carUp = new CANNON.Vec3();
+    carBody.quaternion.vmult(new CANNON.Vec3(0, 1, 0), carUp); 
+
+    const currentEuler = new THREE.Euler().setFromQuaternion(carMesh.quaternion, 'XYZ');
+    const rollPitchCorrection = 0.5;
+
+    if (isCarOnGround && !hasDoubleJumped &&
+        (Math.abs(currentEuler.x) > 0.05 || Math.abs(currentEuler.z) > 0.05)) {
+
+        const upVector = new CANNON.Vec3(0, 1, 0);
+        const correctionTorque = new CANNON.Vec3();
+        carUp.cross(upVector, correctionTorque);
+        carBody.angularVelocity.vadd(
+            correctionTorque.scale(rollPitchCorrection),
+            carBody.angularVelocity
+        );
+    }
+
+// --- SOFT GROUND GRIP (RL-style, steering-safe) ---
+if (isCarOnGround) {
+    const right = carBody.quaternion.vmult(
+        new CANNON.Vec3(1, 0, 0)
+    );
+
+    const lateralSpeed =
+        carBody.velocity.x * right.x +
+        carBody.velocity.z * right.z;
+
+    // Only damp sideways slide, never cancel it
+    const grip = 0.25; // start low (0.2â0.35)
+
+    carBody.velocity.x -= right.x * lateralSpeed * grip;
+    carBody.velocity.z -= right.z * lateralSpeed * grip;
+}
+
+    world.step(1 / 60);
 }
 
 function resetCameraInstant() {
-    cameraYaw = 0;
-    cameraYawDir.set(0, 0, -1);
+    camera.position.set(0, 15, FIELD_L * 0.3 + 25);
+    camera.lookAt(carMesh.position);
 }
 
-// Global variable to help smooth camera movement
-let tempCarPos = new THREE.Vector3();
-let tempBallPos = new THREE.Vector3();
-
-function updateCamera(delta) {
-    if (!carBody) return;
-
-    let targetPos = new THREE.Vector3();
-    let lookAtPos = new THREE.Vector3();
-    
-    // Smoothness factor (higher is smoother)
-    const smoothFactor = 10 * delta; 
-    
-    // Lerp the physics position to a temp position to reduce stuttering caused by physics/render mismatch
-    tempCarPos.lerp(carBody.position, smoothFactor);
-    tempBallPos.lerp(ballBody.position, smoothFactor);
-
-    if (gameState === 'replay') {
-        // Look at the goal explosion point
-        lookAtPos.copy(replayGoalPos);
-        // Position camera behind the blue goal
-        targetPos.set(0, GOAL_HEIGHT * 2, BLUE_GOAL_LINE - FIELD_L * 0.1); 
-        camera.position.lerp(targetPos, 0.1);
-        camera.lookAt(lookAtPos);
+function updateReplay() {
+    if (replayIndex >= replayFrames.length) {
+        resetGame(); // back to normal after replay
         return;
     }
 
-    if (cameraMode === 'car') {
-        const CAMERA_DISTANCE = 15 * SCALE_FACTOR;
-        const CAMERA_HEIGHT = 5 * SCALE_FACTOR;
-        const CAMERA_OFFSET_Z = 5 * SCALE_FACTOR; // Look slightly further ahead
-        
-        // Get car forward direction (CANNON.Vec3)
-        const carForward = new CANNON.Vec3(0, 0, -1);
-        carBody.quaternion.vmult(carForward, carForward);
-        carForward.y = 0;
-        carForward.normalize();
-        
-        // Convert CANNON.Vec3 to THREE.Vector3 for position calculation
-        const threeCarForward = new THREE.Vector3(carForward.x, carForward.y, carForward.z);
-        
-        // 1. Calculate the target position: car position - (forward vector * distance) + (up vector * height)
-        targetPos.copy(tempCarPos); 
-        
-        const cameraOffset = threeCarForward.clone().multiplyScalar(CAMERA_DISTANCE);
-        targetPos.sub(cameraOffset);
-        
-        // 2. Set the height
-        targetPos.y = tempCarPos.y + CAMERA_HEIGHT;
-        
-        // Smoothly move camera
-        camera.position.lerp(targetPos, smoothFactor);
-        
-        // Look at point (slightly in front of the car)
-        const lookAtOffset = threeCarForward.clone().multiplyScalar(CAMERA_OFFSET_Z);
-        lookAtPos.copy(tempCarPos).add(lookAtOffset);
-        
-        camera.lookAt(lookAtPos);
+    const frame = replayFrames[replayIndex];
 
-    } else if (cameraMode === 'ball') {
-        const BALL_CAM_DISTANCE = 35 * SCALE_FACTOR;
-        const BALL_CAM_HEIGHT = 15 * SCALE_FACTOR;
+    // Set ball to recorded position/rotation
+    ballBody.position.copy(frame.ball.pos);
+    ballBody.quaternion.copy(frame.ball.quat);
 
-        // Vector from car to ball
-        const toBall = new THREE.Vector3().copy(tempBallPos).sub(tempCarPos);
-        toBall.y = 0;
-        toBall.normalize();
+    // Set car to recorded position/rotation
+    carBody.position.copy(frame.cars[0].pos);
+    carBody.quaternion.copy(frame.cars[0].quat);
 
-        // Target camera position (behind car, offset from the car-to-ball vector)
-        targetPos.copy(tempCarPos);
-        targetPos.sub(toBall.multiplyScalar(BALL_CAM_DISTANCE));
-        targetPos.y = tempCarPos.y + BALL_CAM_HEIGHT;
+    // Optional: cinematic camera from top-side
+    camera.position.set(frame.ball.pos.x + 10, frame.ball.pos.y + 15, frame.ball.pos.z + 10);
+    camera.lookAt(frame.ball.pos);
 
-        // Smoothly move camera
-        camera.position.lerp(targetPos, smoothFactor);
-
-        // Always look at the ball
-        lookAtPos.copy(tempBallPos);
-        camera.lookAt(lookAtPos);
-    }
-}
-
-function updatePhysics() {
-    // Determine Time Step (fixed 60 FPS)
-    const fixedTimeStep = 1 / 60; 
-    world.step(fixedTimeStep);
-
-    // Update car mesh position
-    carMesh.position.copy(carBody.position);
-    carMesh.quaternion.copy(carBody.quaternion);
-
-    // Update ball mesh position
-    ballMesh.position.copy(ballBody.position);
-    ballMesh.quaternion.copy(ballBody.quaternion);
-    
-    // Update bot mesh position
-    if (botBody) {
-        botMesh.position.copy(botBody.position);
-        botMesh.quaternion.copy(botBody.quaternion);
-    }
+    replayIndex++;
 }
 
 
-function updateBotAI() {
-    if (!botBody || gameMode !== 'bot1v1') return;
-
-    // Reset bot inputs
-    botInputs.up = false;
-    botInputs.down = false;
-    botInputs.left = false;
-    botInputs.right = false;
-    botInputs.shift = false;
-
-    // --- CONSTANTS & VECTORS ---
-    
-    // Orange Bot Goal Line (Z position the bot needs to defend, +Z side)
-    const ORANGE_GOAL_LINE_Z = FIELD_L * 0.3; 
-    // Blue Goal Line (Z position the bot needs to attack, -Z side)
-    const BLUE_GOAL_LINE_Z = -FIELD_L * 0.3; 
-
-    const BOT_Z = botBody.position.z;
-    const BOT_X = botBody.position.x;
-
-    // Vector from bot to ball (XZ plane only)
-    const toBall = new CANNON.Vec3(
-        ballBody.position.x - BOT_X,
-        0,
-        ballBody.position.z - BOT_Z
-    );
-    const toBallLength = toBall.length();
-
-    // Get the bot's current forward direction (XZ plane only)
-    const forward = botBody.quaternion.vmult(new CANNON.Vec3(0, 0, -1));
-    forward.y = 0;
-    forward.normalize();
-
-    // Angle between forward direction and vector to ball (Angle of error)
-    const angleToBall =
-        Math.atan2(
-            forward.x * toBall.z - forward.z * toBall.x,
-            forward.x * toBall.x + forward.z * toBall.z
-        );
-        
-    // --- 1. WALL AVOIDANCE (Unsticking) ---
-    // Check if bot is past the opponent's goal line AND pushing into the wall
-    const isStuckAtWall = (BOT_Z < BLUE_GOAL_LINE_Z - 5) && (forward.z < -0.5);
-
-    if (isStuckAtWall) {
-        // Reverse to unstick
-        botInputs.down = true; 
-        botInputs.left = false;
-        botInputs.right = false;
-        return; // Exit AI logic this frame to focus on unsticking
-    }
-
-    // --- 2. CORE CHASE LOGIC ---
-
-    // The preferred position is behind the ball (closer to the bot's own goal, +Z side)
-    const desiredZ = ballBody.position.z + 5; // Target slightly past the ball towards its goal
-    
-    // Check if the bot is on the wrong side of the ball (closer to the Blue goal/back of the ball)
-    const isBehindBall = BOT_Z > ballBody.position.z; 
-
-    if (isBehindBall) {
-        // Attack Mode: Drive straight toward the ball
-        
-        // Steering: Adjust angle to point towards the ball
-        if (angleToBall > 0.1) botInputs.left = true;
-        else if (angleToBall < -0.1) botInputs.right = true;
-        
-        // Drive: Go forward
-        botInputs.up = true;
-        
-    } else {
-        // Positional Correction: Bot is too far forward (closer to the Blue goal than the ball)
-
-        // Target: Move back to the desired Z-position behind the ball
-        const toDesiredPos = new CANNON.Vec3(0, 0, desiredZ - BOT_Z); 
-        
-        // Calculate the angle to face the desired position 
-        const angleToDesiredPos =
-            Math.atan2(
-                forward.x * toDesiredPos.z - forward.z * toDesiredPos.x,
-                forward.x * toDesiredPos.x + forward.z * toDesiredPos.z
-            );
-            
-        // Steering: Turn toward the desired Z position (away from the ball)
-        if (angleToDesiredPos > 0.1) botInputs.left = true;
-        else if (angleToDesiredPos < -0.1) botInputs.right = true;
-
-        // Drive: Reverse to get behind the ball
-        botInputs.down = true;
-    }
-    
-    // --- 3. BOOST ---
-    if (toBallLength > 60 && botInputs.up) { // Only boost if driving forward and far
-        botInputs.shift = true;
-    }
-}
-
-
-// Particle system for goal explosion
-let particleSystem;
-let particlesData = [];
-const particleCount = 100;
-const explosionDuration = 1.5;
-
-function createGoalExplosion(position, color) {
-    // Remove old system if it exists
-    if (particleSystem) {
-        scene.remove(particleSystem);
-        particleSystem.geometry.dispose();
-        particleSystem.material.dispose();
-    }
-
+function createGoalExplosion(position, color = 0xffaa00) {
+    const particleCount = 50;
     const geometry = new THREE.BufferGeometry();
     const positions = new Float32Array(particleCount * 3);
-    const colors = new Float32Array(particleCount * 3);
-
-    const colorObj = new THREE.Color(color);
+    const velocities = [];
 
     for (let i = 0; i < particleCount; i++) {
-        const i3 = i * 3;
-        
-        // Initial position is at the goal
-        positions[i3 + 0] = position.x;
-        positions[i3 + 1] = position.y;
-        positions[i3 + 2] = position.z;
+        positions[i * 3] = position.x;
+        positions[i * 3 + 1] = position.y;
+        positions[i * 3 + 2] = position.z;
 
-        colors[i3 + 0] = colorObj.r;
-        colors[i3 + 1] = colorObj.g;
-        colors[i3 + 2] = colorObj.b;
-
-        // Random velocity vector (high impulse)
-        const velX = (Math.random() - 0.5) * 60;
-        const velY = Math.random() * 80 + 20; // Upwards bias
-        const velZ = (Math.random() - 0.5) * 60;
-        
-        particlesData.push({
-            velocity: new THREE.Vector3(velX, velY, velZ),
-            startTime: performance.now() / 1000,
-            originalPosition: new THREE.Vector3(position.x, position.y, position.z)
-        });
+        // Random velocity for each particle
+        const angle = Math.random() * Math.PI * 2;
+        const speed = Math.random() * 20 + 10;
+        const vY = Math.random() * 15 + 10; // upward bias
+        velocities.push(new THREE.Vector3(Math.cos(angle) * speed, vY, Math.sin(angle) * speed));
     }
 
     geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
     const material = new THREE.PointsMaterial({
-        size: 5,
+        color: color,
+        size: 2,
         transparent: true,
-        opacity: 1.0,
-        vertexColors: true,
-        blending: THREE.AdditiveBlending,
-        depthTest: true
+        opacity: 0.9
     });
 
-    particleSystem = new THREE.Points(geometry, material);
-    scene.add(particleSystem);
+    const particles = new THREE.Points(geometry, material);
+    scene.add(particles);
+
+    const lifetime = 1.0; // seconds
+    let elapsed = 0;
+
+    function animateParticles(delta) {
+        elapsed += delta;
+        if (elapsed > lifetime) {
+            scene.remove(particles);
+            geometry.dispose();
+            material.dispose();
+            return;
+        }
+
+        const pos = geometry.attributes.position.array;
+        for (let i = 0; i < particleCount; i++) {
+            pos[i * 3] += velocities[i].x * delta;
+            pos[i * 3 + 1] += velocities[i].y * delta;
+            pos[i * 3 + 2] += velocities[i].z * delta;
+
+            // Gravity effect
+            velocities[i].y -= 30 * delta;
+        }
+        geometry.attributes.position.needsUpdate = true;
+        requestAnimationFrame(() => animateParticles(delta));
+    }
+
+    animateParticles(1/60);
 }
 
-function updateParticles() {
-    if (!particleSystem) return;
 
-    const currentTime = performance.now() / 1000;
-    const positions = particleSystem.geometry.attributes.position.array;
-    
-    let activeParticles = 0;
+    function updateCamera() {
+        const carPos = carMesh.position;
+        const ballPos = ballMesh.position;
+        
+        const lerpFactor = 0.1;
 
-    for (let i = 0; i < particleCount; i++) {
-        const i3 = i * 3;
-        const data = particlesData[i];
-        const timeElapsed = currentTime - data.startTime;
+        let targetLookAt = new THREE.Vector3();
+        let targetPosition = new THREE.Vector3();
 
-        if (timeElapsed < explosionDuration) {
-            // Apply physics (basic gravity)
-            const g = -150; // Gravity constant from CANNON.js
-            
-            // Calculate new position using kinematic equation: P = P0 + V0*t + 0.5*a*t^2
-            positions[i3 + 0] = data.originalPosition.x + data.velocity.x * timeElapsed;
-            positions[i3 + 1] = data.originalPosition.y + data.velocity.y * timeElapsed + 0.5 * g * timeElapsed * timeElapsed;
-            positions[i3 + 2] = data.originalPosition.z + data.velocity.z * timeElapsed;
+if (cameraMode === 'car') {
+    const distance = 15 * SCALE_FACTOR * 0.5;
+    const height = 8 * SCALE_FACTOR * 0.3;
 
-            // Fade out the particle
-            particleSystem.material.opacity = 1.0 - (timeElapsed / explosionDuration);
-            activeParticles++;
-        } else {
-            // Hide particle by moving it far away
-            positions[i3 + 1] = -1000;
+    // World-space forward of the car
+    const rawForward = new THREE.Vector3(0, 0, -1).applyQuaternion(carMesh.quaternion);
+
+    // World-space up of the car
+    const carUp = new THREE.Vector3(0, 1, 0).applyQuaternion(carMesh.quaternion);
+
+    // How upright the car is (1 = upright, 0 = vertical)
+    const flatness = Math.abs(carUp.y);
+
+    // Only update camera yaw when car is not near vertical
+    if (flatness > 0.35) {
+        const projected = rawForward.clone();
+        projected.y = 0;
+
+        if (projected.lengthSq() > 0.0001) {
+            projected.normalize();
+            cameraYawDir.lerp(projected, 0.15); // smooth yaw follow
+            cameraYawDir.normalize();
         }
     }
-    
-    particleSystem.geometry.attributes.position.needsUpdate = true;
 
-    if (activeParticles === 0) {
-        scene.remove(particleSystem);
-        particleSystem = null;
-    }
+    // Use remembered yaw direction
+    const forward = cameraYawDir.clone();
+
+    // Camera behind the car
+    const offset = forward.clone().multiplyScalar(-distance);
+    offset.y = height;
+
+    targetPosition.copy(carPos).add(offset);
+    targetLookAt.copy(carPos);
+} else if (cameraMode === 'ball') {
+    // Ball-assisted car cam (stay behind car, minor yaw adjustment)
+    const distanceBehind = 15 * SCALE_FACTOR * 0.5;
+    const height = 8 * SCALE_FACTOR * 0.3;
+
+    // Get flat forward vector of car (ignore pitch/roll)
+    const carQuat = carMesh.quaternion.clone();
+    const carEuler = new THREE.Euler().setFromQuaternion(carQuat, 'YXZ');
+    carEuler.x = 0; // ignore pitch
+    carEuler.z = 0; // ignore roll
+    const flatQuat = new THREE.Quaternion().setFromEuler(carEuler);
+
+    const carForward = new THREE.Vector3(0, 0, -1).applyQuaternion(flatQuat);
+
+    // Standard behind-car offset
+    const offset = carForward.clone().multiplyScalar(-distanceBehind);
+    offset.y = height;
+    targetPosition.copy(carPos).add(offset);
+
+    // Look at a point slightly nudged toward the ball, only in XZ plane (ignore Y)
+    const ballDir = new THREE.Vector3(ballPos.x - carPos.x, 0, ballPos.z - carPos.z).normalize();
+    const blend = 0.2; // small tweak factor to nudge camera yaw
+    const lookDir = carForward.clone().lerp(ballDir, blend).normalize();
+
+    targetLookAt.copy(carPos).add(lookDir.clone().multiplyScalar(10)); // look slightly ahead
 }
+if (gameState === 'replay') {
+        const t = 1 - (replayTimer / 2.5);
 
-// Global clock for delta time calculation
-const clock = new THREE.Clock();
+        // Sideline elevated camera
+        const side = replayGoalPos.z > 0 ? -1 : 1;
 
-// --- GAMEPAD FUNCTIONS ---
+        const camPos = new THREE.Vector3(
+            FIELD_W * 0.75 * side,      // sideline
+            35,                         // height
+            replayGoalPos.z + Math.sin(t * Math.PI) * 20
+        );
 
-function setupGamepadListeners() {
-    window.addEventListener('gamepadconnected', (e) => {
-        // Only track the first connected gamepad for now
-        if (!gamepad) {
-            gamepad = e.gamepad;
-            console.log("Gamepad connected at index %d: %s. %d buttons, %d axes.",
-                gamepad.index, gamepad.id,
-                gamepad.buttons.length, gamepad.axes.length);
+        camera.position.lerp(camPos, 0.08);
+        camera.lookAt(replayGoalPos);
+
+        replayTimer -= 1 / 60;
+        if (replayTimer <= 0) {
+            resetGame();
         }
-    });
 
-    window.addEventListener('gamepaddisconnected', (e) => {
-        if (gamepad && gamepad.index === e.gamepad.index) {
-            gamepad = undefined;
-            console.log("Gamepad disconnected from index %d: %s",
-                e.gamepad.index, e.gamepad.id);
-            // Reset analog controls when gamepad disconnects
-            inputs.driveAnalog = 0.0;
-            inputs.steerAnalog = 0.0;
-        }
-    });
-}
-
-// Toggles digital/keyboard inputs
-let wasJumpPressed = false; 
-let wasCamPressed = false;
-
-function updateGamepad() {
-    if (!gamepad) return;
-
-    // Get fresh gamepad state (required for most browsers)
-    const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
-    gamepad = gamepads[gamepad.index];
-
-    if (!gamepad) return;
-
-    // --- AXES (Analog Movement) ---
-    const AXIS_THRESHOLD = 0.1;
-    
-    // Left Stick X (Steering): Axis 0
-    const steer = gamepad.axes[0];
-    inputs.steerAnalog = (Math.abs(steer) > AXIS_THRESHOLD) ? steer : 0.0;
-
-    // Left Stick Y (Drive): Axis 1 (Inverted for forward/backward)
-    const drive = gamepad.axes[1];
-    inputs.driveAnalog = (Math.abs(drive) > AXIS_THRESHOLD) ? -drive : 0.0;
-
-    // --- BUTTONS (Digital Actions) ---
-    // Mapping is based on standard Xbox layout (A=0, B=1, X=2, Y=3, LB=4, RB=5, LT=6, RT=7)
-
-    // 1. Jump/Flip (A/X - Button 0)
-    const isJumpPressed = gamepad.buttons[0] ? gamepad.buttons[0].pressed : false;
-    
-    // Manual state handling to trigger the jump logic in the main loop (only on press down)
-    if (isJumpPressed && !wasJumpPressed) {
-        inputs.space = true;
-    } else if (!isJumpPressed && wasJumpPressed) {
-        inputs.space = false;
+        return;
     }
-    wasJumpPressed = isJumpPressed;
 
-    // 2. Boost (RT/R2 - Button 7)
-    // Use digital button 7 (some controllers use Axis 5 for analog RT, but for boost digital is fine)
-    inputs.shift = gamepad.buttons[7] ? gamepad.buttons[7].pressed : false;
 
-    // 3. Air Roll Left (LB/L1 - Button 4)
-    inputs.q = gamepad.buttons[4] ? gamepad.buttons[4].pressed : false;
-
-    // 4. Air Roll Right (RB/R1 - Button 5)
-    inputs.e = gamepad.buttons[5] ? gamepad.buttons[5].pressed : false;
-
-    // 5. Camera Toggle (X/Square - Button 2)
-    const isCamPressed = gamepad.buttons[2] ? gamepad.buttons[2].pressed : false;
-    if (isCamPressed && !wasCamPressed) {
-        // Trigger the camera toggle logic
-        cameraMode = (cameraMode === 'car') ? 'ball' : 'car';
-        document.getElementById('cameraMode').textContent = `Camera: ${cameraMode === 'car' ? 'Car Cam' : 'Ball Cam'}`;
+        // Apply smooth interpolation (LERP)
+        camera.position.lerp(targetPosition, lerpFactor);
+        camera.lookAt(targetLookAt);
     }
-    wasCamPressed = isCamPressed;
-    
-    // 6. Pause (Start - Button 9)
-    if (gamepad.buttons[9] && gamepad.buttons[9].pressed) {
-        // Dispatch ESC key event to trigger the existing menu toggle logic
-        const escEvent = new KeyboardEvent("keydown", { key: "Escape" });
-        window.dispatchEvent(escEvent);
-    }
-}
 
 
 function animate() {
     requestAnimationFrame(animate);
     if(!gameStarted) return;
 
-    const delta = clock.getDelta();
-    updateParticles(); // Update particles every frame
-    updateGamepad();   // UPDATE GAMEPAD INPUTS
-
     if(gameState === 'replay') {
-        // FIX: Replay now uses the global 'replayFrames' array correctly
         if(replayIndex < replayFrames.length){
             const frame = replayFrames[replayIndex];
             
             // 1. Load Player Car (Index 0)
             carBody.position.copy(frame.cars[0].pos);
             carBody.quaternion.copy(frame.cars[0].quat);
-            // Must update mesh immediately for visual sync during replay
-            carMesh.position.copy(carBody.position); 
-            carMesh.quaternion.copy(carBody.quaternion);
             
             // 2. Load Ball
             ballBody.position.copy(frame.ball.pos);
             ballBody.quaternion.copy(frame.ball.quat);
-            ballMesh.position.copy(ballBody.position);
-            ballMesh.quaternion.copy(ballBody.quaternion);
             
-            // 3. Load Bot Car (Index 1)
+            // 3. Load Bot Car (Index 1) - THE TWEAK
             if (gameMode === 'bot1v1' && botBody && frame.cars.length > 1) {
-                botBody.position.copy(frame.cars[1].pos); // Bot is always index 1
+                botBody.position.copy(frame.cars[1].pos);
                 botBody.quaternion.copy(frame.cars[1].quat);
-                botMesh.position.copy(botBody.position);
-                botMesh.quaternion.copy(botBody.quaternion);
             }
             
             replayIndex++;
-            updateCamera(delta);
-        } else {
-            // End of replay, wait for timer
-            replayTimer -= delta;
-            updateCamera(delta);
-            if (replayTimer <= 0) {
-                resetGame();
-            }
         }
     } else {
         updatePhysics();
@@ -1478,39 +1394,136 @@ function animate() {
             updateBotAI();
             applyCarControls(botBody, botInputs);
         }
-        
-        applyCarControls(carBody, inputs);
-
-        const isCarOnGround = carBody.position.y < (CAR_SIZE.h * 1.5);
-        if (!isCarOnGround && !isFlipping) {
-            updateAerialControls();
-        } else {
-            // Apply damping after flip ends
-            carBody.angularDamping = 0.9;
-            hasDoubleJumped = false;
-        }
-
-        if (isFlipping) {
-            flipTimer -= delta;
-            if (flipTimer <= 0) {
-                isFlipping = false;
-            }
-        }
-        
-        updateCamera(delta);
     }
 
+    carMesh.position.copy(carBody.position);
+    carMesh.quaternion.copy(carBody.quaternion);
+    ballMesh.position.copy(ballBody.position);
+    ballMesh.quaternion.copy(ballBody.quaternion);
+    
+    if (botMesh) {
+        botMesh.position.copy(botBody.position);
+        botMesh.quaternion.copy(botBody.quaternion);
+    }
+
+
+    updateCamera();
     renderer.render(scene, camera);
+} // <<< The missing brace was here in the original code but now it's correctly placed at the end. >>>
+
+function updateBotAI() {
+    if (!botBody || gameMode !== 'bot1v1') return;
+
+    // Reset inputs
+    botInputs.up = botInputs.down = botInputs.left = botInputs.right = botInputs.shift = false;
+
+    // --- CONSTANTS ---
+    const BLUE_GOAL_Z = -FIELD_L * 0.45;
+    const ORANGE_GOAL_Z = FIELD_L * 0.45;
+
+    const BOT = botBody.position;
+    const BALL = ballBody.position;
+
+    // --- BASIC VECTORS ---
+    const toBall = new CANNON.Vec3(BALL.x - BOT.x, 0, BALL.z - BOT.z);
+    const distToBall = toBall.length();
+
+    const forward = botBody.quaternion.vmult(new CANNON.Vec3(0, 0, -1));
+    forward.y = 0;
+    forward.normalize();
+
+    const angleBetween = (vec) => {
+        return Math.atan2(
+            forward.x * vec.z - forward.z * vec.x,
+            forward.x * vec.x + forward.z * vec.z
+        );
+    };
+
+    const steerToward = (angle) => {
+        const DEADZONE = 0.12;
+        if (angle > DEADZONE) botInputs.right = true;
+        else if (angle < -DEADZONE) botInputs.left = true;
+    };
+
+    // --- STATE DETECTION ---
+
+    const ballOnOurSide = BALL.z > 0;
+    const kickoff = distToBall > 40 && Math.abs(BALL.x) < 2;
+
+    const behindBall = BOT.z < BALL.z; // Corrected
+    const ballMovingTowardGoal = BALL.z > BOT.z;
+
+    // --- STATE 1: KICKOFF ---
+    if (kickoff) {
+        const angle = angleBetween(toBall);
+        steerToward(angle);
+        botInputs.up = true;
+        botInputs.shift = true;
+        return;
+    }
+
+    // --- STATE 2: DEFENSE / SHADOW ---
+    if (ballOnOurSide && !behindBall) {
+        const defendPoint = new CANNON.Vec3(
+            BALL.x * 0.4,
+            0,
+            ORANGE_GOAL_Z * 0.25
+        );
+        const toDefend = defendPoint.vsub(BOT);
+        const angle = angleBetween(toDefend);
+        steerToward(angle);
+        botInputs.up = true;
+        return;
+    }
+
+    // --- STATE 3: RETREAT TO BEHIND BALL ---
+    if (!behindBall) {
+        const ballToGoal = new CANNON.Vec3(
+            0 - BALL.x,
+            0,
+            BLUE_GOAL_Z - BALL.z
+        ).unit();
+
+        const approachPoint = new CANNON.Vec3(
+            BALL.x - ballToGoal.x * 6,
+            0,
+            BALL.z - ballToGoal.z * 6
+        );
+
+        const toApproach = new CANNON.Vec3(
+            approachPoint.x - BOT.x,
+            0,
+            approachPoint.z - BOT.z
+        );
+
+        const angle = angleBetween(toApproach);
+        steerToward(angle);
+
+        if (Math.abs(angle) < Math.PI * 0.6) botInputs.up = true;
+        else botInputs.down = true;
+
+        return;
+    }
+
+    // --- STATE 4: APPROACH BALL ---
+    if (distToBall > 6) {
+        const angle = angleBetween(toBall);
+        steerToward(angle);
+        botInputs.up = true;
+
+        if (Math.abs(angle) < 0.25 && distToBall > 12)
+            botInputs.shift = true;
+
+        return;
+    }
+
+    // --- STATE 5: CHALLENGE / HIT ---
+    const angle = angleBetween(toBall);
+    steerToward(angle);
+    botInputs.up = true;
+    botInputs.shift = true;
 }
-
-
-function onWindowResize() {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-}
-
-
+	
 function recordReplayFrame() {
     if (gameState !== 'playing') return;
 
@@ -1525,6 +1538,7 @@ function recordReplayFrame() {
                 pos: carBody.position.clone(),
                 quat: carBody.quaternion.clone(),
             }
+            // add more cars here if needed
         ]
     };
     
@@ -1535,6 +1549,7 @@ function recordReplayFrame() {
         });
     }
 
+
     replayBuffer.push(frame);
 
     // Keep buffer length fixed (only last REPLAY_LENGTH seconds)
@@ -1543,121 +1558,77 @@ function recordReplayFrame() {
     }
 }
 
-
-// --- MOBILE/JOYSTICK CONTROLS LOGIC ---
-
-function setupMobileControls() {
-    const joystick = document.getElementById('joystick');
-    const stick = document.getElementById('stick');
-    const joystickRadius = 70; // Half of 140px width/height
-    
-    // Check if controls should be visible based on initial state (which is currently false, and toggled via settings)
-    if (!mobileControlsEnabled) {
-        joystick.style.display = 'none';
-    } else {
-        joystick.style.display = 'block';
-        joystick.style.bottom = '20px'; // Position it on the bottom left
-        joystick.style.left = '20px';
-    }
-    
-    let isDragging = false;
-    let startX = 0;
-    let startY = 0;
-    let currentTouchId = null;
-
-    function startDrag(e) {
-        if (!mobileControlsEnabled) return;
-
-        e.preventDefault();
-        // Check if another touch is already dragging the joystick (multi-touch handling)
-        if (isDragging) return; 
-
-        isDragging = true;
-        
-        const touch = e.touches ? e.touches[0] : e;
-        currentTouchId = e.touches ? touch.identifier : null;
-        
-        // Position the dynamic joystick where the touch occurred
-        joystick.style.left = (touch.clientX - joystickRadius) + 'px';
-        joystick.style.top = (touch.clientY - joystickRadius) + 'px';
-        
-        startX = touch.clientX;
-        startY = touch.clientY;
-    }
-
-    function moveDrag(e) {
-        if (!isDragging || !mobileControlsEnabled) return;
-        e.preventDefault();
-        
-        let touch = e.touches ? Array.from(e.touches).find(t => t.identifier === currentTouchId) : e;
-        if (!touch) touch = e; // Fallback for mouse/pointer
-
-        let deltaX = touch.clientX - startX;
-        let deltaY = touch.clientY - startY;
-        
-        let distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-        const angle = Math.atan2(deltaY, deltaX);
-
-        // Cap distance to the joystick radius
-        if (distance > joystickRadius) {
-            distance = joystickRadius;
-            deltaX = Math.cos(angle) * joystickRadius;
-            deltaY = Math.sin(angle) * joystickRadius;
-        }
-
-        // Move the stick visual
-        stick.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
-
-        // --- ANALOG INPUT MAPPING ---
-        // Y-axis for Drive: -1.0 (reverse) to 1.0 (forward)
-        // Inverted: moving UP (negative Y delta) is forward (positive driveAnalog)
-        inputs.driveAnalog = THREE.MathUtils.clamp(-deltaY / joystickRadius, -1, 1);
-        
-        // X-axis for Steer: -1.0 (left) to 1.0 (right)
-        inputs.steerAnalog = THREE.MathUtils.clamp(deltaX / joystickRadius, -1, 1);
-    }
-
-    function endDrag(e) {
-        if (!mobileControlsEnabled) return;
-        // If using touch and the lifted touch is not the one controlling the stick, ignore
-        if (e.changedTouches && isDragging && !Array.from(e.changedTouches).some(t => t.identifier === currentTouchId)) {
-            return;
-        }
-
-        if (!isDragging) return;
-        isDragging = false;
-        currentTouchId = null;
-        
-        // Snap stick back to center and reset analog inputs
-        stick.style.transform = `translate(0, 0)`;
-        inputs.driveAnalog = 0.0;
-        inputs.steerAnalog = 0.0;
-        
-        // Reset joystick position
-        joystick.style.left = '20px';
-        joystick.style.top = ''; 
-        joystick.style.bottom = '20px'; 
-    }
-
-    // Add pointer/touch event listeners
-    joystick.addEventListener('pointerdown', startDrag);
-    document.addEventListener('pointermove', moveDrag);
-    document.addEventListener('pointerup', endDrag);
-    joystick.addEventListener('touchstart', startDrag);
-    document.addEventListener('touchmove', moveDrag);
-    joystick.addEventListener('touchend', endDrag);
-}
-
-
 const menuOverlay = document.getElementById('menuOverlay');
 const FreeBtn = document.getElementById('FreeplayBtn');
 const botBtn = document.getElementById('1v1Btn')
 const settingsBtn = document.getElementById('settingsBtn');
 const quitBtn = document.getElementById('quitBtn');
+let joyActive = false;
+let joyCenterX = 0;
+let joyCenterY = 0;
 
-const escEvent = new KeyboardEvent("keydown", { key: "Escape" });
+const joystick = document.getElementById("joystick");
+const stick = document.getElementById("stick");
+	
+window.addEventListener("touchstart", (e) => {
+    if (!mobileControlsEnabled) return;
 
-document.getElementById('pauseBtn').addEventListener('click', () => {
+    const t = e.touches[0];
+
+    joyActive = true;
+
+    joyCenterX = t.clientX;
+    joyCenterY = t.clientY;
+
+    joystick.style.left = (joyCenterX - 70) + "px";
+    joystick.style.top = (joyCenterY - 70) + "px";
+    joystick.style.display = "block";
+});
+
+window.addEventListener("touchmove", (e) => {
+    if (!joyActive || !mobileControlsEnabled) return;
+
+    const t = e.touches[0];
+    const dx = t.clientX - joyCenterX;
+    const dy = t.clientY - joyCenterY;
+
+    const maxDist = 50;
+    const dist = Math.min(maxDist, Math.hypot(dx, dy));
+    const angle = Math.atan2(dy, dx);
+
+    const stickX = Math.cos(angle) * dist;
+    const stickY = Math.sin(angle) * dist;
+
+    stick.style.left = (40 + stickX) + "px";
+    stick.style.top = (40 + stickY) + "px";
+
+    const nx = stickX / maxDist;
+    const ny = stickY / maxDist;
+
+    inputs.left = nx < -0.3;
+    inputs.right = nx > 0.3;
+    inputs.up = ny < -0.3;
+    inputs.down = ny > 0.3;
+});
+
+window.addEventListener("touchend", () => {
+    if (!mobileControlsEnabled) return;
+
+    joyActive = false;
+    joystick.style.display = "none";
+
+    inputs.left = false;
+    inputs.right = false;
+    inputs.up = false;
+    inputs.down = false;
+});
+
+
+const pauseBtn = document.getElementById("pauseBtn");
+
+pauseBtn.addEventListener("touchstart", () => {
+    // Simulate pressing Escape
+    const escEvent = new KeyboardEvent("keydown", { key: "Escape" });
     window.dispatchEvent(escEvent);
 });
 
@@ -1688,7 +1659,6 @@ settingsBtn.addEventListener('click', () => {
 
     if (choice) {
         mobileControlsEnabled = !mobileControlsEnabled;
-        setupMobileControls(); // Re-run setup to show/hide the joystick
     }
 });
 
@@ -1709,6 +1679,12 @@ window.addEventListener('keydown', (e) => {
         }
     }
 });
+
+    function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    }
 </script>
 </body>
 </html>
