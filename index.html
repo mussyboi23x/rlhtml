@@ -526,7 +526,7 @@ let inputs = {
 
         const wheelGeo = new THREE.CylinderGeometry(0.8, 0.8, 0.5, 12);
         const wheelMat = new THREE.MeshStandardMaterial({ color: 0x111111 });
-        const positions = [[-2, -1, 2], [2, -1, 2], [-2, -1, -2], [2, -1, -2]];
+        const positions = [[-2, -1, 2], [2, -1, 2], [-2, -1, 2], [2, -1, -2]];
         positions.forEach(pos => {
             const w = new THREE.Mesh(wheelGeo, wheelMat);
             w.rotation.z = Math.PI / 2;
@@ -687,7 +687,7 @@ function applyCarControls(body, controlInputs) {
         ballMesh.add(light);
     }
 
-    function airDodge() {
+function airDodge() {
     const currentTime = performance.now() / 1000;
     if (currentTime - lastJumpTime > DOUBLE_JUMP_LOCKOUT || hasDoubleJumped) return;
 
@@ -698,41 +698,63 @@ function applyCarControls(body, controlInputs) {
     carBody.angularDamping = 0.05;
 
     const forward = new CANNON.Vec3(0, 0, -1);
-    const right = new CANNON.Vec3(-1, 0, 0);
-    const left = new CANNON.Vec3(1, 0, 0);
+    const right = new CANNON.Vec3(1, 0, 0); // Swapped sign for CANNON convention
     const down = new CANNON.Vec3(0, 0, 1);
 
+    // Get car orientation vectors
     const f = carBody.quaternion.vmult(forward);
     const r = carBody.quaternion.vmult(right);
-    const l = carBody.quaternion.vmult(left);
-    const d = carBody.quaternion.vmult(down);
 
     flipAxis.set(0, 0, 0);
 
-if (inputs.up || inputs.driveAnalog > 0.5) {                 // front flip
-    flipAxis.copy(r); // FLIPPED
-    carBody.velocity.vadd(f.scale(-18), carBody.velocity);
-} else if (inputs.down || inputs.driveAnalog < -0.5) {          // back flip
-    flipAxis.copy(l).scale(-1); // FLIPPED
-    carBody.velocity.vadd(f.scale(14), carBody.velocity);
-} else if (inputs.right || inputs.steerAnalog > 0.5) {         // right flip
-    flipAxis.copy(f); // FLIPPED
-    carBody.velocity.vadd(r.scale(14), carBody.velocity);
-} else if (inputs.left || inputs.steerAnalog < -0.5) {          // left flip
-    flipAxis.copy(d); // FLIPPED
-    carBody.velocity.vadd(r.scale(-14), carBody.velocity);
+    // --- ANALOG INPUT PRIORITY FOR FLIP DIRECTION ---
+    const stickMagnitude = Math.sqrt(inputs.driveAnalog * inputs.driveAnalog + inputs.steerAnalog * inputs.steerAnalog);
+    
+    if (stickMagnitude > 0.4) {
+        // Calculate flip direction based on stick angle
+        const stickAngle = Math.atan2(inputs.steerAnalog, inputs.driveAnalog);
+        
+        // Convert the angle to a world-relative impulse vector (cannon convention: X=right, Z=forward)
+        const worldImpulseX = Math.sin(stickAngle) * 1;
+        const worldImpulseZ = Math.cos(stickAngle) * 1;
+        
+        // Create an impulse vector relative to the car's orientation
+        const carLocalImpulse = new CANNON.Vec3(worldImpulseX, 0, worldImpulseZ);
+        
+        // Rotate the impulse vector by the car's quaternion to get world impulse
+        const worldImpulse = carBody.quaternion.vmult(carLocalImpulse);
+        
+        // Apply velocity boost in the direction of the stick
+        carBody.velocity.vadd(worldImpulse.scale(FLIP_IMPULSE), carBody.velocity);
 
+        // Apply angular velocity for the flip animation.
+        // The flip axis should be perpendicular to the impulse direction in the car's frame.
+        // Cross product of UP (0,1,0) and the car's local stick direction (worldImpulse, unrotated)
+        const upVector = new CANNON.Vec3(0, 1, 0);
+        const localFlipAxis = new CANNON.Vec3();
+        upVector.cross(carLocalImpulse, localFlipAxis);
+        
+        // Rotate the flip axis into world space
+        carBody.quaternion.vmult(localFlipAxis, flipAxis);
+        
+        // Apply rotation
+        carBody.angularVelocity.set(
+            flipAxis.x * 12,
+            flipAxis.y * 12,
+            flipAxis.z * 12
+        );
+        
+    } else if (inputs.up) { // Digital front flip fallback
+        flipAxis.copy(r).scale(-1); // Pitch down axis
+        carBody.velocity.vadd(f.scale(-18), carBody.velocity);
+        carBody.angularVelocity.set(flipAxis.x * 12, flipAxis.y * 12, flipAxis.z * 12);
+        
     } else {
+        // Simple second jump if no direction input is provided
         carBody.velocity.y += JUMP_VELOCITY * 0.5;
         isFlipping = false;
         return;
     }
-
-    carBody.angularVelocity.set(
-        flipAxis.x * 12,
-        flipAxis.y * 12,
-        flipAxis.z * 12
-    );
 }
 
     
@@ -793,6 +815,7 @@ if (inputs.up || inputs.driveAnalog > 0.5) {                 // front flip
             carBody.velocity.y = JUMP_VELOCITY;
             lastJumpTime = currentTime;
             
+            // Clear digital flags that would trigger a flip if held down
             inputs.W_aerialReady = inputs.up ? false : inputs.W_aerialReady;
             inputs.S_aerialReady = inputs.down ? false : inputs.S_aerialReady;
             inputs.A_aerialReady = inputs.left ? false : inputs.A_aerialReady;
@@ -919,74 +942,89 @@ function score(team) {
 }
 
     
-    function updateAerialControls() {
-        if (hasDoubleJumped) return;
+function updateAerialControls() {
+    if (hasDoubleJumped) return;
 
-        const forwardVector = new CANNON.Vec3(0, 0, -1);
-        const rightVector = new CANNON.Vec3(1, 0, 0);
-        const upVector = new CANNON.Vec3(0, 1, 0);
+    const forwardVector = new CANNON.Vec3(0, 0, -1);
+    const rightVector = new CANNON.Vec3(1, 0, 0);
+    const upVector = new CANNON.Vec3(0, 1, 0);
 
-        const rotatedForward = carBody.quaternion.vmult(forwardVector);
-        const rotatedRight = carBody.quaternion.vmult(rightVector);
-        const rotatedUp = carBody.quaternion.vmult(upVector);
+    const rotatedForward = carBody.quaternion.vmult(forwardVector);
+    const rotatedRight = carBody.quaternion.vmult(rightVector);
+    const rotatedUp = carBody.quaternion.vmult(upVector);
 
-        const AERIAL_ROTATION_RATE = 1.5;    
-        const AIR_ROLL_MULTIPLIER = 2.0;    
-        const MAX_AERIAL_ANGULAR_SPEED = 10.0;    
+    const AERIAL_ROTATION_RATE = 1.5;    
+    const AIR_ROLL_MULTIPLIER = 2.0;    
+    const MAX_AERIAL_ANGULAR_SPEED = 10.0;    
 
-        function isSpeedCapped(axis, isPositiveDirection) {
-            const currentSpeed = carBody.angularVelocity.dot(axis);
-            if (isPositiveDirection) {
-                return currentSpeed > MAX_AERIAL_ANGULAR_SPEED;
-            } else {
-                return currentSpeed < -MAX_AERIAL_ANGULAR_SPEED;
+    function isSpeedCapped(axis, isPositiveDirection) {
+        const currentSpeed = carBody.angularVelocity.dot(axis);
+        if (isPositiveDirection) {
+            return currentSpeed > MAX_AERIAL_ANGULAR_SPEED;
+        } else {
+            return currentSpeed < -MAX_AERIAL_ANGULAR_SPEED;
+        }
+    }
+    
+    // --- Pitch/Yaw Control (Gamepad/Analog Priority) ---
+    if (gamepad) {
+        const pitch = inputs.driveAnalog; // Y-axis from stick
+        const yaw = inputs.steerAnalog; // X-axis from stick
+        
+        if (Math.abs(pitch) > 0.1) {
+            const pitchRate = pitch * AERIAL_ROTATION_RATE;
+            // Apply rotation around the right axis. The inputs.driveAnalog is -1(up) to 1(down)
+            // Cannon right vector is +X. Pitching nose up is rotating around -X.
+            if (pitch < 0 && !isSpeedCapped(rotatedRight, false)) { // Nose Up
+                 carBody.angularVelocity.vsub(rotatedRight.scale(-pitchRate), carBody.angularVelocity);
+            } else if (pitch > 0 && !isSpeedCapped(rotatedRight, true)) { // Nose Down
+                carBody.angularVelocity.vadd(rotatedRight.scale(pitchRate), carBody.angularVelocity);
             }
         }
-        
-        // Pitch Control (W/S)
+        if (Math.abs(yaw) > 0.1) {
+            const yawRate = yaw * AERIAL_ROTATION_RATE;
+            // Apply rotation around the up axis (Yaw)
+            if (yaw < 0 && !isSpeedCapped(rotatedUp, true)) { // Yaw Left
+                carBody.angularVelocity.vsub(rotatedUp.scale(yawRate), carBody.angularVelocity);
+            } else if (yaw > 0 && !isSpeedCapped(rotatedUp, false)) { // Yaw Right
+                carBody.angularVelocity.vadd(rotatedUp.scale(yawRate), carBody.angularVelocity);
+            }
+        }
+    } 
+    // --- Pitch Control (KBM Fallback) ---
+    else {
+        // Pitch Control (W/S) - Digital
         if (inputs.up && inputs.W_aerialReady && !isSpeedCapped(rotatedRight, false)) {
             carBody.angularVelocity.vsub(rotatedRight.scale(AERIAL_ROTATION_RATE), carBody.angularVelocity);    
         }
         if (inputs.down && inputs.S_aerialReady && !isSpeedCapped(rotatedRight, true)) {
             carBody.angularVelocity.vadd(rotatedRight.scale(AERIAL_ROTATION_RATE), carBody.angularVelocity);    
         }
-        
-        // Roll Control (Q/E)
-        const rollRate = AERIAL_ROTATION_RATE * AIR_ROLL_MULTIPLIER;
-        if (inputs.q && inputs.Q_aerialReady && !isSpeedCapped(rotatedForward, false)) {
-            carBody.angularVelocity.vsub(rotatedForward.scale(rollRate), carBody.angularVelocity);
-        }
-        if (inputs.e && inputs.E_aerialReady && !isSpeedCapped(rotatedForward, true)) {
-            carBody.angularVelocity.vadd(rotatedForward.scale(rollRate), carBody.angularVelocity);
-        }
+    }
 
-        // Yaw Control (A/D)
+
+    // --- Roll Control (Q/E) - Always Digital/KBM/Shoulder buttons ---
+    const rollRate = AERIAL_ROTATION_RATE * AIR_ROLL_MULTIPLIER;
+    if (inputs.q && inputs.Q_aerialReady && !isSpeedCapped(rotatedForward, false)) {
+        carBody.angularVelocity.vsub(rotatedForward.scale(rollRate), carBody.angularVelocity);
+    }
+    if (inputs.e && inputs.E_aerialReady && !isSpeedCapped(rotatedForward, true)) {
+        carBody.angularVelocity.vadd(rotatedForward.scale(rollRate), carBody.angularVelocity);
+    }
+
+    // --- Yaw Control (A/D) - KBM Fallback Only (Analog takes priority) ---
+    if (!gamepad) {
         if (inputs.left && inputs.A_aerialReady && !isSpeedCapped(rotatedUp, true)) {
             carBody.angularVelocity.vsub(rotatedUp.scale(AERIAL_ROTATION_RATE), carBody.angularVelocity);
         }
         if (inputs.right && inputs.D_aerialReady && !isSpeedCapped(rotatedUp, false)) {
             carBody.angularVelocity.vadd(rotatedUp.scale(AERIAL_ROTATION_RATE), carBody.angularVelocity);
         }
-        
-        // Analog Aerial Pitch/Yaw control (Left Stick when airborne, overrides digital)
-        if (gamepad) {
-            const pitch = inputs.driveAnalog; // Y-axis from stick
-            const yaw = inputs.steerAnalog; // X-axis from stick
-            
-            if (Math.abs(pitch) > 0.1) {
-                const pitchRate = pitch * AERIAL_ROTATION_RATE;
-                carBody.angularVelocity.vadd(rotatedRight.scale(-pitchRate), carBody.angularVelocity);
-            }
-            if (Math.abs(yaw) > 0.1) {
-                const yawRate = yaw * AERIAL_ROTATION_RATE;
-                carBody.angularVelocity.vadd(rotatedUp.scale(yawRate), carBody.angularVelocity);
-            }
-        }
-
-
-        // Apply air resistance to rotation
-        carBody.angularVelocity.scale(0.99, carBody.angularVelocity);
     }
+
+    // Apply air resistance to rotation
+    carBody.angularVelocity.scale(0.99, carBody.angularVelocity);
+}
 
 function resetCameraInstant() {
     cameraYaw = 0;
@@ -1035,11 +1073,8 @@ function updateCamera(delta) {
         const threeCarForward = new THREE.Vector3(carForward.x, carForward.y, carForward.z);
         
         // 1. Calculate the target position: car position - (forward vector * distance) + (up vector * height)
-        // This is the **original** correct logic, using Three.js vector operations.
         targetPos.copy(tempCarPos); 
         
-        // FIX: The previous fix introduced a bug by calling .multiplyScalar() on a temporary vector 
-        // that was also used for lookAtPos calculation. Clone the forward vector before scaling.
         const cameraOffset = threeCarForward.clone().multiplyScalar(CAMERA_DISTANCE);
         targetPos.sub(cameraOffset);
         
@@ -1473,13 +1508,6 @@ function onWindowResize() {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
-    // Re-check and update joystick visibility/position on resize if needed
-    // This is handled passively by the setupMobileControls check, but can be forced here:
-    if (document.getElementById('joystick').style.display !== 'none' && !('ontouchstart' in window)) {
-         // If a desktop user toggles it on, we want it to stay on.
-    } else {
-        // Otherwise, hide it if the window is large and it's not a touch device.
-    }
 }
 
 
