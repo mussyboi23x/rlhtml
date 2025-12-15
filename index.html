@@ -197,8 +197,8 @@
     let replayIndex = 0;      // current frame for replay
     let isRecordingReplay = false;
     let isReplaying = false;
-    let REPLAY_LENGTH = 5; // seconds to replay
-    let REPLAY_FPS = 60;    // how many frames per second
+    const REPLAY_LENGTH = 5; // seconds to replay
+    const REPLAY_FPS = 60;    // how many frames per second
     let gameStarted = false;
     let botBody, botMesh;
     let gameMode = 'freeplay';
@@ -1008,21 +1008,32 @@ function updateCamera(delta) {
         const CAMERA_HEIGHT = 5 * SCALE_FACTOR;
         const CAMERA_OFFSET_Z = 10 * SCALE_FACTOR;
         
-        // Get car forward direction
+        // Get car forward direction (CANNON.Vec3)
         const carForward = new CANNON.Vec3(0, 0, -1);
         carBody.quaternion.vmult(carForward, carForward);
         carForward.y = 0;
         carForward.normalize();
         
-        // Calculate target camera position (behind and slightly above the car)
-        targetPos.copy(carBody.position).vsub(carForward.scale(CAMERA_DISTANCE), targetPos);
+        // --- FIX: Convert CANNON.Vec3 to THREE.Vector3 for position calculation ---
+        const threeCarForward = new THREE.Vector3(carForward.x, carForward.y, carForward.z);
+        
+        // 1. Start targetPos at carBody.position (CANNON to THREE conversion happens via .copy())
+        targetPos.copy(carBody.position); 
+        
+        // 2. Subtract the scaled forward vector (THREE.Vector3.sub is used)
+        targetPos.sub(threeCarForward.multiplyScalar(CAMERA_DISTANCE));
+        
+        // 3. Set the height
         targetPos.y = carBody.position.y + CAMERA_HEIGHT;
+        // --- END FIX ---
         
         // Smoothly move camera
         camera.position.lerp(targetPos, smoothFactor);
         
         // Look at point (slightly in front of the car)
-        lookAtPos.copy(carBody.position).vadd(carForward.scale(CAMERA_OFFSET_Z), lookAtPos);
+        const lookAtForward = new THREE.Vector3().copy(carBody.position).add(threeCarForward.multiplyScalar(CAMERA_OFFSET_Z));
+        lookAtPos.copy(lookAtForward);
+        
         camera.lookAt(lookAtPos);
 
     } else if (cameraMode === 'ball') {
