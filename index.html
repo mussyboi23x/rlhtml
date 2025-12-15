@@ -27,8 +27,7 @@
         width: 50vw;
         height: 100vh;
         z-index: 19;
-        touch-action: auto;
-		pointer-events: auto;
+        touch-action: none;
     }
     #left-zone {
         left: 0;
@@ -1503,11 +1502,11 @@ let rightTouch = false;
 
 function updateMobileKeys() {
     // Drive forward if either side is touched
-    keys['w'] = leftTouch || rightTouch;
+    inputs.up = leftTouch || rightTouch;
 
     // Steering
-    keys['a'] = leftTouch;
-    keys['d'] = rightTouch;
+    inputs.left = leftTouch;
+    inputs.right = rightTouch;
 }
 
 // Touch start
@@ -1580,6 +1579,7 @@ window.addEventListener('keydown', (e) => {
 </script>
 </body>
 </html>
+
 
 
 
