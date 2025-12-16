@@ -487,13 +487,10 @@ let botInputs = {
         const shape = new CANNON.Box(new CANNON.Vec3(CAR_SIZE.w, CAR_SIZE.h, CAR_SIZE.l));
         carBody = new CANNON.Body({ mass: 150 * SCALE_FACTOR, material: physicsMaterials.object }); 
         carBody.addShape(shape);
-		carBody.position.set(0, 2, -FIELD_L * 0.3);
+        carBody.position.set(0, 2, FIELD_L * 0.3);
         carBody.linearDamping = 0.01; 
         carBody.angularDamping = 0.9;
         world.addBody(carBody);
-carMesh.rotation.y = Math.PI;
-
-
 
         carMesh = new THREE.Group();
         
@@ -775,9 +772,7 @@ if (inputs.up) {                 // front flip
     }
 
     function resetGame() {
-carMesh.rotation.y = Math.PI;
-
-
+        carBody.position.set(0, 2, -FIELD_L * 0.3);
         carBody.velocity.set(0, 0, 0);
         carBody.quaternion.set(0, 0, 0, 1);
         carBody.angularVelocity.set(0, 0, 0);
@@ -1693,8 +1688,3 @@ window.addEventListener('keydown', (e) => {
 </script>
 </body>
 </html>
-
-
-
-
-
