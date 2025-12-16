@@ -491,10 +491,8 @@ let botInputs = {
         carBody.linearDamping = 0.01; 
         carBody.angularDamping = 0.9;
         world.addBody(carBody);
-        carBody.quaternion.setFromAxisAngle(
-           new CANNON.Vec3(0, 1, 0),
-            Math.PI
-        );
+carMesh.rotation.y = Math.PI;
+
 
 
         carMesh = new THREE.Group();
@@ -777,13 +775,8 @@ if (inputs.up) {                 // front flip
     }
 
     function resetGame() {
-        const spawnZ = FIELD_L * 0.3;
-carBody.position.set(0, 2, spawnZ);
+carMesh.rotation.y = Math.PI;
 
-carBody.quaternion.setFromAxisAngle(
-    new CANNON.Vec3(0, 1, 0),
-    Math.PI
-);
 
         carBody.velocity.set(0, 0, 0);
         carBody.quaternion.set(0, 0, 0, 1);
@@ -1700,6 +1693,7 @@ window.addEventListener('keydown', (e) => {
 </script>
 </body>
 </html>
+
 
 
 
