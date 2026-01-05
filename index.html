@@ -1452,114 +1452,129 @@ function updateBotAI() {
     if (!botBody || gameMode !== 'bot1v1') return;
 
     // Reset inputs
-    botInputs.up = botInputs.down = botInputs.left = botInputs.right = botInputs.shift = false;
+    botInputs.up =
+    botInputs.down =
+    botInputs.left =
+    botInputs.right =
+    botInputs.shift = false;
 
     // --- CONSTANTS ---
-    const BLUE_GOAL_Z = -FIELD_L * 0.45;
-    const ORANGE_GOAL_Z = FIELD_L * 0.45;
+    const BLUE_GOAL_Z   = -FIELD_L * 0.45; // bot's goal
+    const ORANGE_GOAL_Z =  FIELD_L * 0.45; // enemy goal
 
-    const BOT = botBody.position;
+    const BOT  = botBody.position;
     const BALL = ballBody.position;
 
     // --- BASIC VECTORS ---
-    const toBall = new CANNON.Vec3(BALL.x - BOT.x, 0, BALL.z - BOT.z);
+    const toBall = new CANNON.Vec3(
+        BALL.x - BOT.x,
+        0,
+        BALL.z - BOT.z
+    );
     const distToBall = toBall.length();
 
-    const forward = botBody.quaternion.vmult(new CANNON.Vec3(0, 0, -1));
+    const forward = botBody.quaternion.vmult(
+        new CANNON.Vec3(0, 0, -1)
+    );
     forward.y = 0;
     forward.normalize();
 
-    const angleBetween = (vec) => {
-        return Math.atan2(
+    const angleBetween = (vec) =>
+        Math.atan2(
             forward.x * vec.z - forward.z * vec.x,
             forward.x * vec.x + forward.z * vec.z
         );
-    };
 
     const steerToward = (angle) => {
-        const DEADZONE = 0.12;
-        if (angle > DEADZONE) botInputs.right = true;
-        else if (angle < -DEADZONE) botInputs.left = true;
+        const DEAD = 0.12;
+        if (angle > DEAD) botInputs.right = true;
+        else if (angle < -DEAD) botInputs.left = true;
     };
 
-    // --- STATE DETECTION ---
+    /* ================= KICKOFF (INLINE) ================= */
+    const isKickoff =
+        Math.abs(BALL.x) < 0.5 &&
+        Math.abs(BALL.z) < 0.5 &&
+        distToBall > 25;
 
-    const ballOnOurSide = BALL.z > 0;
-    const kickoff = distToBall > 40 && Math.abs(BALL.x) < 2;
-
-    const behindBall = BOT.z < BALL.z; // Corrected
-    const ballMovingTowardGoal = BALL.z > BOT.z;
-
-    // --- STATE 1: KICKOFF ---
-    if (kickoff) {
+    if (isKickoff) {
         const angle = angleBetween(toBall);
         steerToward(angle);
         botInputs.up = true;
-        botInputs.shift = true;
+        botInputs.shift = Math.abs(angle) < 0.08;
         return;
     }
+    /* ==================================================== */
 
-    // --- STATE 2: DEFENSE / SHADOW ---
+    // --- GOAL CONTEXT ---
+    const ballToEnemyGoal = new CANNON.Vec3(
+        -BALL.x,
+        0,
+        ORANGE_GOAL_Z - BALL.z
+    ).unit();
+
+    const ballToOwnGoal = new CANNON.Vec3(
+        -BALL.x,
+        0,
+        BLUE_GOAL_Z - BALL.z
+    ).unit();
+
+    const behindBall =
+        (BOT.z - BALL.z) * (ORANGE_GOAL_Z - BALL.z) < 0;
+
+    const ballOnOurSide = BALL.z < 0;
+
+    // --- DEFENSE ---
     if (ballOnOurSide && !behindBall) {
         const defendPoint = new CANNON.Vec3(
             BALL.x * 0.4,
             0,
-            ORANGE_GOAL_Z * 0.25
+            BLUE_GOAL_Z + 10
         );
-        const toDefend = defendPoint.vsub(BOT);
-        const angle = angleBetween(toDefend);
-        steerToward(angle);
+        steerToward(angleBetween(defendPoint.vsub(BOT)));
         botInputs.up = true;
         return;
     }
 
-    // --- STATE 3: RETREAT TO BEHIND BALL ---
+    // --- ROTATE BEHIND BALL ---
     if (!behindBall) {
-        const ballToGoal = new CANNON.Vec3(
-            0 - BALL.x,
-            0,
-            BLUE_GOAL_Z - BALL.z
-        ).unit();
-
         const approachPoint = new CANNON.Vec3(
-            BALL.x - ballToGoal.x * 6,
+            BALL.x - ballToEnemyGoal.x * 7,
             0,
-            BALL.z - ballToGoal.z * 6
+            BALL.z - ballToEnemyGoal.z * 7
         );
-
-        const toApproach = new CANNON.Vec3(
-            approachPoint.x - BOT.x,
-            0,
-            approachPoint.z - BOT.z
-        );
-
-        const angle = angleBetween(toApproach);
-        steerToward(angle);
-
-        if (Math.abs(angle) < Math.PI * 0.6) botInputs.up = true;
-        else botInputs.down = true;
-
+        steerToward(angleBetween(approachPoint.vsub(BOT)));
+        botInputs.up = true;
         return;
     }
 
-    // --- STATE 4: APPROACH BALL ---
+    // --- APPROACH BALL ---
     if (distToBall > 6) {
         const angle = angleBetween(toBall);
         steerToward(angle);
         botInputs.up = true;
-
-        if (Math.abs(angle) < 0.25 && distToBall > 12)
-            botInputs.shift = true;
-
+        botInputs.shift = Math.abs(angle) < 0.2;
         return;
     }
 
-    // --- STATE 5: CHALLENGE / HIT ---
-    const angle = angleBetween(toBall);
-    steerToward(angle);
+    // --- SHOOT (ANTI OWN-GOAL) ---
+    let shotDir = ballToEnemyGoal;
+
+    // If aiming toward own goal, force side clear
+    const ownGoalAngle = angleBetween(ballToOwnGoal);
+    if (Math.abs(ownGoalAngle) < Math.PI / 3) {
+        shotDir = new CANNON.Vec3(
+            Math.sign(BALL.x) || 1,
+            0,
+            0
+        );
+    }
+
+    steerToward(angleBetween(shotDir));
     botInputs.up = true;
     botInputs.shift = true;
 }
+
 	
 function recordReplayFrame() {
     if (gameState !== 'playing') return;
@@ -1737,6 +1752,7 @@ window.addEventListener('keydown', (e) => {
 </script>
 </body>
 </html>
+
 
 
 
