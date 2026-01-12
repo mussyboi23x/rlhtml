@@ -1726,12 +1726,12 @@ boostBtn.addEventListener("touchend", () => {
     const jumpBtn = document.getElementById("jumpBtn");
 jumpBtn.addEventListener("touchstart", () => {
     if (!mobileControlsEnabled) return;
-    inputs.space = true;
+    inputs.space = isDown;
 });
 
 jumpBtn.addEventListener("touchend", () => {
     if (!mobileControlsEnabled) return;
-    inputs.space = false;
+    inputs.space = !isDown;
 });
 	
 const pauseBtn = document.getElementById("pauseBtn");
