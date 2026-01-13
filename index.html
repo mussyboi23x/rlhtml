@@ -325,7 +325,7 @@ let botInputs = {
 
         // 2. SETUP CANNON.JS PHYSICS
         world = new CANNON.World();
-        world.gravity.set(0, -70, 0); 
+        world.gravity.set(0, -110, 0); 
         world.broadphase = new CANNON.NaiveBroadphase();
         world.solver.iterations = 10;
 
@@ -1311,7 +1311,7 @@ function createGoalExplosion(position, color = 0xffaa00) {
             pos[i * 3 + 2] += velocities[i].z * delta;
 
             // Gravity effect
-            velocities[i].y -= 15 * delta;
+            velocities[i].y -= 23 * delta;
         }
         geometry.attributes.position.needsUpdate = true;
         requestAnimationFrame(() => animateParticles(delta));
