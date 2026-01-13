@@ -1365,31 +1365,49 @@ if (cameraMode === 'car') {
     targetPosition.copy(carPos).add(offset);
     targetLookAt.copy(carPos);
 } else if (cameraMode === 'ball') {
-    // Ball-assisted car cam (stay behind car, minor yaw adjustment)
+
     const distanceBehind = 15 * SCALE_FACTOR * 0.5;
     const height = 8 * SCALE_FACTOR * 0.3;
 
-    // Get flat forward vector of car (ignore pitch/roll)
-    const carQuat = carMesh.quaternion.clone();
-    const carEuler = new THREE.Euler().setFromQuaternion(carQuat, 'YXZ');
-    carEuler.x = 0; // ignore pitch
-    carEuler.z = 0; // ignore roll
-    const flatQuat = new THREE.Quaternion().setFromEuler(carEuler);
+    // --- 1. Get flat forward vector of car (ignore pitch/roll) ---
+    const flatQuat = new THREE.Quaternion();
+    {
+        const e = new THREE.Euler().setFromQuaternion(carMesh.quaternion, 'YXZ');
+        e.x = 0;
+        e.z = 0;
+        flatQuat.setFromEuler(e);
+    }
 
     const carForward = new THREE.Vector3(0, 0, -1).applyQuaternion(flatQuat);
 
-    // Standard behind-car offset
+    // --- 2. Camera position behind car ---
     const offset = carForward.clone().multiplyScalar(-distanceBehind);
     offset.y = height;
     targetPosition.copy(carPos).add(offset);
 
-    // Look at a point slightly nudged toward the ball, only in XZ plane (ignore Y)
-    const ballDir = new THREE.Vector3(ballPos.x - carPos.x, 0, ballPos.z - carPos.z).normalize();
-    const blend = 0.2; // small tweak factor to nudge camera yaw
+    // --- 3. Compute ball direction in XZ plane ---
+    const ballDir = new THREE.Vector3(
+        ballPos.x - carPos.x,
+        0,
+        ballPos.z - carPos.z
+    ).normalize();
+
+    // --- 4. Blend car forward with ball direction (yaw only) ---
+    let blend = 0.35; // stronger than before, feels more RL-like
+
+    // If ball is behind the car, reduce influence to avoid snapping
+    const dot = carForward.dot(ballDir);
+    if (dot < 0) {
+        blend *= Math.max(0, dot + 1); // fades out when ball is behind
+    }
+
     const lookDir = carForward.clone().lerp(ballDir, blend).normalize();
 
-    targetLookAt.copy(carPos).add(lookDir.clone().multiplyScalar(10)); // look slightly ahead
+    // --- 5. Look ahead in blended direction ---
+    const lookDistance = 20;
+    targetLookAt.copy(carPos).add(lookDir.multiplyScalar(lookDistance));
 }
+
 if (gameState === 'replay') {
         const t = 1 - (replayTimer / 2.5);
 
